@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["teacher", "student"] }).notNull(),
+  role: text("role", { enum: ["teacher", "student", "admin"] }).notNull(),
   fullName: text("full_name").notNull(),
   department: text("department"),
   profileImage: text("profile_image"),
@@ -79,6 +79,27 @@ export const sessions = pgTable("sessions", {
   cursorPosition: jsonb("cursor_position"), // {x: number, y: number, page?: number}
 });
 
+// Admin oversight tables
+export const userApprovals = pgTable("user_approvals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending"),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const contentModerationLog = pgTable("content_moderation_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentType: text("content_type", { enum: ["note", "message", "user"] }).notNull(),
+  contentId: varchar("content_id").notNull(),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
+  action: text("action", { enum: ["approved", "rejected", "flagged", "removed"] }).notNull(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -109,6 +130,17 @@ export const insertAnnotationSchema = createInsertSchema(annotations).omit({
   createdAt: true,
 });
 
+export const insertUserApprovalSchema = createInsertSchema(userApprovals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentModerationLogSchema = createInsertSchema(contentModerationLog).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -121,3 +153,7 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Annotation = typeof annotations.$inferSelect;
 export type InsertAnnotation = z.infer<typeof insertAnnotationSchema>;
 export type Session = typeof sessions.$inferSelect;
+export type UserApproval = typeof userApprovals.$inferSelect;
+export type InsertUserApproval = z.infer<typeof insertUserApprovalSchema>;
+export type ContentModerationLog = typeof contentModerationLog.$inferSelect;
+export type InsertContentModerationLog = z.infer<typeof insertContentModerationLogSchema>;

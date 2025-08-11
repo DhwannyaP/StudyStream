@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { moderateMessage } from "./services/openai";
-import { insertUserSchema, insertNoteSchema, insertStudyGroupSchema, insertMessageSchema, insertAnnotationSchema } from "@shared/schema";
+import { insertUserSchema, insertNoteSchema, insertStudyGroupSchema, insertMessageSchema, insertAnnotationSchema, insertUserApprovalSchema, insertContentModerationLogSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import { z } from "zod";
@@ -43,6 +43,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   };
+
+  const requireAdmin = requireRole("admin");
 
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
@@ -356,6 +358,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       res.json(sessionsWithUser);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin routes
+  app.get("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/users/:role", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { role } = req.params;
+      const users = await storage.getUsersByRole(role);
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/users/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      // Log the approval action
+      await storage.createModerationLog({
+        contentType: "user",
+        contentId: id,
+        adminId: req.user!.id,
+        action: "approved",
+        reason: reason || "User approved by administrator"
+      });
+      
+      res.json({ message: "User approved successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/users/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      // Log the rejection action
+      await storage.createModerationLog({
+        contentType: "user",
+        contentId: id,
+        adminId: req.user!.id,
+        action: "rejected",
+        reason: reason || "User rejected by administrator"
+      });
+      
+      res.json({ message: "User rejected successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/user-approvals", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const approvals = await storage.getUserApprovals(status as string);
+      res.json(approvals);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/moderation-logs", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const logs = await storage.getModerationLogs(req.user!.id);
+      res.json(logs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/content/flag", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { contentType, contentId, reason } = req.body;
+      
+      const log = await storage.createModerationLog({
+        contentType,
+        contentId,
+        adminId: req.user!.id,
+        action: "flagged",
+        reason
+      });
+      
+      res.json(log);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

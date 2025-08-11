@@ -27,13 +27,15 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage Solutions
 - **Database**: PostgreSQL with Drizzle ORM schema definitions
-- **Schema Design**: Separate tables for users, notes, study groups, messages, annotations, and group memberships
+- **Schema Design**: Separate tables for users, notes, study groups, messages, annotations, group memberships, user approvals, and content moderation logs
+- **Admin Oversight**: User approval tracking and content moderation logging for administrative supervision
 - **File Storage**: Local file system storage with configurable upload limits (50MB default)
 - **Session Storage**: In-memory Map-based session management for development
 
 ### Authentication & Authorization
 - **Authentication**: Custom session-based authentication with Bearer tokens
-- **Authorization**: Role-based access control (teacher/student roles)
+- **Authorization**: Three-tier role-based access control (admin/teacher/student roles)
+- **Admin Supervision**: Admin oversight for user registration approval and content moderation
 - **Session Management**: Server-side session storage with client-side token persistence
 - **Route Protection**: Frontend middleware for role-based route access
 

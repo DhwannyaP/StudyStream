@@ -9,7 +9,11 @@ import {
   type InsertMessage,
   type Annotation,
   type InsertAnnotation,
-  type Session
+  type Session,
+  type UserApproval,
+  type InsertUserApproval,
+  type ContentModerationLog,
+  type InsertContentModerationLog
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -18,8 +22,19 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+  getUsersByRole(role: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  
+  // Admin - User Approvals
+  createUserApproval(approval: InsertUserApproval): Promise<UserApproval>;
+  getUserApprovals(status?: string): Promise<UserApproval[]>;
+  updateUserApproval(id: string, status: string, reason?: string): Promise<UserApproval | undefined>;
+  
+  // Admin - Content Moderation
+  createModerationLog(log: InsertContentModerationLog): Promise<ContentModerationLog>;
+  getModerationLogs(adminId?: string): Promise<ContentModerationLog[]>;
   
   // Notes
   getNote(id: string): Promise<Note | undefined>;
@@ -64,8 +79,24 @@ export class MemStorage implements IStorage {
   private messages: Map<string, Message> = new Map();
   private annotations: Map<string, Annotation> = new Map();
   private sessions: Map<string, Session> = new Map();
+  private userApprovals: Map<string, UserApproval> = new Map();
+  private moderationLogs: Map<string, ContentModerationLog> = new Map();
 
   constructor() {
+    // Create default admin
+    const defaultAdmin: User = {
+      id: "admin1",
+      username: "admin",
+      email: "admin@university.edu",
+      password: "admin123",
+      role: "admin",
+      fullName: "System Administrator",
+      department: "IT Administration",
+      profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face",
+      createdAt: new Date(),
+    };
+    this.users.set(defaultAdmin.id, defaultAdmin);
+
     // Create default teacher
     const defaultTeacher: User = {
       id: "teacher1",
@@ -121,6 +152,14 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getUsersByRole(role: string): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.role === role);
+  }
+
   async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
@@ -128,6 +167,58 @@ export class MemStorage implements IStorage {
     const updatedUser = { ...user, ...updates };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+
+  // Admin - User Approvals
+  async createUserApproval(insertApproval: InsertUserApproval): Promise<UserApproval> {
+    const id = randomUUID();
+    const approval: UserApproval = {
+      ...insertApproval,
+      id,
+      status: insertApproval.status ?? "pending",
+      reason: insertApproval.reason ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userApprovals.set(id, approval);
+    return approval;
+  }
+
+  async getUserApprovals(status?: string): Promise<UserApproval[]> {
+    const approvals = Array.from(this.userApprovals.values());
+    return status ? approvals.filter(a => a.status === status) : approvals;
+  }
+
+  async updateUserApproval(id: string, status: string, reason?: string): Promise<UserApproval | undefined> {
+    const approval = this.userApprovals.get(id);
+    if (!approval) return undefined;
+    
+    const updated: UserApproval = {
+      ...approval,
+      status: status as any,
+      reason: reason ?? approval.reason,
+      updatedAt: new Date(),
+    };
+    this.userApprovals.set(id, updated);
+    return updated;
+  }
+
+  // Admin - Content Moderation
+  async createModerationLog(insertLog: InsertContentModerationLog): Promise<ContentModerationLog> {
+    const id = randomUUID();
+    const log: ContentModerationLog = {
+      ...insertLog,
+      id,
+      reason: insertLog.reason ?? null,
+      createdAt: new Date(),
+    };
+    this.moderationLogs.set(id, log);
+    return log;
+  }
+
+  async getModerationLogs(adminId?: string): Promise<ContentModerationLog[]> {
+    const logs = Array.from(this.moderationLogs.values());
+    return adminId ? logs.filter(l => l.adminId === adminId) : logs;
   }
 
   // Notes
