@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCollab - Collaborative Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'body': ['Roboto', 'sans-serif'],
+                        'heading': ['Roboto Slab', 'serif']
+                    },
+                    colors: {
+                        primary: '#1976D2',
+                        secondary: '#388E3C',
+                        accent: '#FF5722',
+                        surface: '#FFFFFF',
+                        background: '#FAFAFA',
+                        'text-primary': '#212121',
+                        'text-secondary': '#757575'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Roboto', sans-serif; }
+        .font-heading { font-family: 'Roboto Slab', serif; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .laser-cursor {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            transition: all 0.1s ease;
+        }
+        
+        .highlight-selection {
+            background: rgba(255, 235, 59, 0.3);
+            border-radius: 2px;
+        }
+        
+        .online-indicator {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-text-primary min-h-screen">
+
+<!-- @COMPONENT: LandingPage -->
+<div id="landing-page" class="min-h-screen bg-gradient-to-br from-primary to-blue-600 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 bg-white bg-opacity-10 backdrop-blur-sm border-b border-white border-opacity-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                    <span class="font-heading text-white text-2xl font-bold">EduCollab</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#features" class="text-white hover:text-blue-200 transition-colors">Features</a>
+                    <a href="#about" class="text-white hover:text-blue-200 transition-colors">About</a>
+                    <a href="#contact" class="text-white hover:text-blue-200 transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div class="text-center">
+            <h1 class="font-heading text-4xl md:text-6xl font-bold text-white mb-6 animate-fade-in">
+                Collaborative Learning<br>
+                <span class="text-blue-200">Made Simple</span>
+            </h1>
+            <p class="text-xl text-blue-100 mb-12 max-w-2xl mx-auto animate-slide-up">
+                Connect teachers and students through real-time collaboration, shared notes, and interactive learning experiences.
+            </p>
+            
+            <!-- Login Options -->
+            <div class="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+                <!-- @COMPONENT: TeacherLoginCard -->
+                <div class="bg-white rounded-xl shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300 animate-slide-up cursor-pointer" onclick="showTeacherLogin()">
+                    <div class="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-chalkboard-teacher text-white text-2xl"></i>
+                    </div>
+                    <h3 class="font-heading text-2xl font-bold text-text-primary mb-4">Teacher Portal</h3>
+                    <p class="text-text-secondary mb-6">Upload and manage your course materials, track student engagement, and facilitate collaborative learning.</p>
+                    <button class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        Sign In as Teacher
+                    </button>
+                </div>
+                <!-- @END_COMPONENT: TeacherLoginCard -->
+                
+                <!-- @COMPONENT: StudentLoginCard -->
+                <div class="bg-white rounded-xl shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300 animate-slide-up cursor-pointer" onclick="showStudentLogin()">
+                    <div class="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-user-graduate text-white text-2xl"></i>
+                    </div>
+                    <h3 class="font-heading text-2xl font-bold text-text-primary mb-4">Student Portal</h3>
+                    <p class="text-text-secondary mb-6">Access course materials, collaborate with peers, join study groups, and engage in real-time discussions.</p>
+                    <button class="w-full bg-secondary text-white py-3 rounded-lg hover:bg-green-600 transition-colors font-medium">
+                        Sign In as Student
+                    </button>
+                </div>
+                <!-- @END_COMPONENT: StudentLoginCard -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Preview -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center text-white">
+                <i class="fas fa-highlighter text-4xl mb-4 text-blue-200"></i>
+                <h4 class="font-heading text-xl font-bold mb-2">Real-time Annotations</h4>
+                <p class="text-blue-100">Highlight and annotate documents together in real-time</p>
+            </div>
+            <div class="text-center text-white">
+                <i class="fas fa-video text-4xl mb-4 text-blue-200"></i>
+                <h4 class="font-heading text-xl font-bold mb-2">Video Collaboration</h4>
+                <p class="text-blue-100">Connect through video calls and screen sharing</p>
+            </div>
+            <div class="text-center text-white">
+                <i class="fas fa-users text-4xl mb-4 text-blue-200"></i>
+                <h4 class="font-heading text-xl font-bold mb-2">Study Groups</h4>
+                <p class="text-blue-100">Create and join study groups for better learning</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: LandingPage -->
+
+<!-- @COMPONENT: TeacherDashboard -->
+<div id="teacher-dashboard" class="hidden min-h-screen bg-background">
+    <!-- Teacher Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-graduation-cap text-primary text-2xl"></i>
+                    <span class="font-heading text-2xl font-bold">EduCollab</span>
+                    <span class="bg-primary text-white px-3 py-1 rounded-full text-sm">Teacher</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-lg hover:bg-gray-100 relative">
+                        <i class="fas fa-bell text-text-secondary"></i>
+                        <span class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Teacher Avatar" class="w-8 h-8 rounded-full">
+                        <span class="text-text-primary font-medium" data-bind="teacher.name">Dr. Sarah Johnson</span>
+                    </div>
+                    <button onclick="showLandingPage()" class="text-text-secondary hover:text-text-primary">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Teacher Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h1 class="font-heading text-3xl font-bold text-text-primary mb-2">Welcome back, <span data-bind="teacher.name">Dr. Johnson</span>!</h1>
+            <p class="text-text-secondary">Manage your course materials and track student engagement.</p>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-primary bg-opacity-10">
+                        <i class="fas fa-file-alt text-primary"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-text-secondary text-sm">Total Notes</p>
+                        <p class="text-2xl font-bold text-text-primary" data-bind="stats.totalNotes">24</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-secondary bg-opacity-10">
+                        <i class="fas fa-users text-secondary"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-text-secondary text-sm">Active Students</p>
+                        <p class="text-2xl font-bold text-text-primary" data-bind="stats.activeStudents">142</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-accent bg-opacity-10">
+                        <i class="fas fa-eye text-accent"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-text-secondary text-sm">Views Today</p>
+                        <p class="text-2xl font-bold text-text-primary" data-bind="stats.viewsToday">89</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-500 bg-opacity-10">
+                        <i class="fas fa-comments text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-text-secondary text-sm">Discussions</p>
+                        <p class="text-2xl font-bold text-text-primary" data-bind="stats.discussions">15</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-4 mb-8">
+            <button onclick="showUploadModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                <i class="fas fa-plus"></i>
+                <span>Upload New Material</span>
+            </button>
+            <button class="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2">
+                <i class="fas fa-users"></i>
+                <span>Manage Study Groups</span>
+            </button>
+            <button class="bg-white border text-text-primary px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                <i class="fas fa-chart-bar"></i>
+                <span>View Analytics</span>
+            </button>
+        </div>
+        
+        <!-- Recent Materials -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-heading text-xl font-bold text-text-primary">Recent Materials</h2>
+                    <button class="text-primary hover:text-blue-700">View All</button>
+                </div>
+            </div>
+            <div class="p-6">
+                <!-- @MAP: materials.map(material => ( -->
+                <div class="flex items-center justify-between py-4 border-b last:border-b-0">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-lg bg-blue-50">
+                            <i class="fas fa-file-pdf text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-text-primary" data-bind="material.title">Advanced React Patterns</h4>
+                            <p class="text-text-secondary text-sm" data-bind="material.description">Comprehensive guide to React design patterns</p>
+                            <div class="flex items-center space-x-4 mt-1 text-xs text-text-secondary">
+                                <span data-bind="material.uploadDate">Uploaded 2 days ago</span>
+                                <span data-bind="material.views">45 views</span>
+                                <span data-bind="material.activeUsers" class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500 online-indicator"></i>
+                                    <span>3 online</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="p-2 text-text-secondary hover:text-primary rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="p-2 text-text-secondary hover:text-accent rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+                
+                <div class="flex items-center justify-between py-4 border-b">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-lg bg-green-50">
+                            <i class="fas fa-file-powerpoint text-secondary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-text-primary">Database Design Principles</h4>
+                            <p class="text-text-secondary text-sm">Introduction to relational database design</p>
+                            <div class="flex items-center space-x-4 mt-1 text-xs text-text-secondary">
+                                <span>Uploaded 1 week ago</span>
+                                <span>128 views</span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500 online-indicator"></i>
+                                    <span>7 online</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="p-2 text-text-secondary hover:text-primary rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="p-2 text-text-secondary hover:text-accent rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: TeacherDashboard -->
+
+<!-- @COMPONENT: StudentDashboard -->
+<div id="student-dashboard" class="hidden min-h-screen bg-background">
+    <!-- Student Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-graduation-cap text-primary text-2xl"></i>
+                    <span class="font-heading text-2xl font-bold">EduCollab</span>
+                    <span class="bg-secondary text-white px-3 py-1 rounded-full text-sm">Student</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-lg hover:bg-gray-100 relative">
+                        <i class="fas fa-bell text-text-secondary"></i>
+                        <span class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img src="https://pixabay.com/get/g70007d0a6bb59f0719cfd23f0dc49fefa6972f39bec4470a3a635f140b43c3098ddddb0b2deb7ff0602d8cf2764ae3607eab43d5c77364ac3d4568720971b170_1280.jpg" alt="Student Avatar" class="w-8 h-8 rounded-full">
+                        <span class="text-text-primary font-medium" data-bind="student.name">Emily Chen</span>
+                    </div>
+                    <button onclick="showLandingPage()" class="text-text-secondary hover:text-text-primary">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Student Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h1 class="font-heading text-3xl font-bold text-text-primary mb-2">Hello, <span data-bind="student.name">Emily</span>!</h1>
+            <p class="text-text-secondary">Explore course materials and collaborate with your peers.</p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <button onclick="showStudyGroups()" class="bg-white rounded-lg shadow-sm p-6 border text-left hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-primary bg-opacity-10">
+                        <i class="fas fa-users text-primary"></i>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary ml-4">Study Groups</h3>
+                </div>
+                <p class="text-text-secondary">Join or create study groups for collaborative learning</p>
+            </button>
+            
+            <button class="bg-white rounded-lg shadow-sm p-6 border text-left hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-secondary bg-opacity-10">
+                        <i class="fas fa-bookmark text-secondary"></i>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary ml-4">My Bookmarks</h3>
+                </div>
+                <p class="text-text-secondary">Access your saved notes and materials</p>
+            </button>
+            
+            <button class="bg-white rounded-lg shadow-sm p-6 border text-left hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-accent bg-opacity-10">
+                        <i class="fas fa-history text-accent"></i>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary ml-4">Recent Activity</h3>
+                </div>
+                <p class="text-text-secondary">View your recent learning activities</p>
+            </button>
+        </div>
+        
+        <!-- Teachers List -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-heading text-xl font-bold text-text-primary">Your Teachers</h2>
+                    <div class="flex items-center space-x-2">
+                        <input type="search" placeholder="Search teachers..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <button class="p-2 text-text-secondary hover:text-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <!-- @MAP: teachers.map(teacher => ( -->
+                <div class="flex items-center justify-between py-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 rounded-lg px-4 transition-colors" onclick="showTeacherNotes('teacher1')">
+                    <div class="flex items-center space-x-4">
+                        <!-- Teacher profile image showing a professional educator -->
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="Dr. Sarah Johnson - Computer Science Professor" class="w-16 h-16 rounded-full border-2 border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-text-primary text-lg" data-bind="teacher.name">Dr. Sarah Johnson</h4>
+                            <p class="text-text-secondary" data-bind="teacher.department">Computer Science Department</p>
+                            <div class="flex items-center space-x-4 mt-2 text-sm text-text-secondary">
+                                <span data-bind="teacher.notesCount">12 notes</span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500 online-indicator"></i>
+                                    <span data-bind="teacher.onlineStudents">8 students online</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-full text-sm">Active</span>
+                        <i class="fas fa-chevron-right text-text-secondary"></i>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+                
+                <div class="flex items-center justify-between py-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 rounded-lg px-4 transition-colors" onclick="showTeacherNotes('teacher2')">
+                    <div class="flex items-center space-x-4">
+                        <!-- Professional female educator with glasses in academic setting -->
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=64&h=64&fit=crop&crop=face" alt="Prof. Maria Rodriguez - Mathematics Professor" class="w-16 h-16 rounded-full border-2 border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-text-primary text-lg">Prof. Maria Rodriguez</h4>
+                            <p class="text-text-secondary">Mathematics Department</p>
+                            <div class="flex items-center space-x-4 mt-2 text-sm text-text-secondary">
+                                <span>8 notes</span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500 online-indicator"></i>
+                                    <span>5 students online</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-full text-sm">Active</span>
+                        <i class="fas fa-chevron-right text-text-secondary"></i>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between py-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 rounded-lg px-4 transition-colors" onclick="showTeacherNotes('teacher3')">
+                    <div class="flex items-center space-x-4">
+                        <!-- Distinguished male professor in business attire -->
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" alt="Dr. James Wilson - Physics Professor" class="w-16 h-16 rounded-full border-2 border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-text-primary text-lg">Dr. James Wilson</h4>
+                            <p class="text-text-secondary">Physics Department</p>
+                            <div class="flex items-center space-x-4 mt-2 text-sm text-text-secondary">
+                                <span>15 notes</span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-gray-400"></i>
+                                    <span>0 students online</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-gray-100 text-text-secondary px-3 py-1 rounded-full text-sm">Offline</span>
+                        <i class="fas fa-chevron-right text-text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: StudentDashboard -->
+
+<!-- @COMPONENT: TeacherNotesView -->
+<div id="teacher-notes-view" class="hidden min-h-screen bg-background">
+    <!-- Navigation with back button -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showStudentDashboard()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-arrow-left text-text-secondary"></i>
+                    </button>
+                    <i class="fas fa-graduation-cap text-primary text-2xl"></i>
+                    <span class="font-heading text-2xl font-bold">EduCollab</span>
+                    <span class="text-text-secondary">•</span>
+                    <span class="text-text-primary font-medium" data-bind="teacher.name">Dr. Sarah Johnson's Notes</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 text-sm text-text-secondary">
+                        <i class="fas fa-users"></i>
+                        <span data-bind="onlineCount">8 students online</span>
+                    </div>
+                    <button onclick="showLandingPage()" class="text-text-secondary hover:text-text-primary">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Teacher Notes Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Teacher Info -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <div class="flex items-center space-x-4">
+                <!-- Professional educator headshot -->
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" alt="Dr. Sarah Johnson - Computer Science Professor" class="w-20 h-20 rounded-full border-2 border-gray-200">
+                <div>
+                    <h1 class="font-heading text-2xl font-bold text-text-primary" data-bind="teacher.name">Dr. Sarah Johnson</h1>
+                    <p class="text-text-secondary" data-bind="teacher.department">Computer Science Department</p>
+                    <p class="text-text-secondary text-sm" data-bind="teacher.email">sarah.johnson@university.edu</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notes Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- @MAP: notes.map(note => ( -->
+            <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer" onclick="showNoteViewer('note1')">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-lg bg-blue-50">
+                            <i class="fas fa-file-pdf text-primary text-xl"></i>
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm text-text-secondary">
+                            <i class="fas fa-circle text-green-500 online-indicator"></i>
+                            <span data-bind="note.onlineUsers">3 online</span>
+                        </div>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary mb-2" data-bind="note.title">Advanced React Patterns</h3>
+                    <p class="text-text-secondary text-sm mb-4" data-bind="note.description">Comprehensive guide covering advanced React design patterns, hooks, and performance optimization techniques.</p>
+                    <div class="flex items-center justify-between text-xs text-text-secondary">
+                        <span data-bind="note.lastUpdated">Updated 2 days ago</span>
+                        <span data-bind="note.pageCount">24 pages</span>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_MAP )) -->
+            
+            <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer" onclick="showNoteViewer('note2')">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-lg bg-green-50">
+                            <i class="fas fa-file-powerpoint text-secondary text-xl"></i>
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm text-text-secondary">
+                            <i class="fas fa-circle text-green-500 online-indicator"></i>
+                            <span>5 online</span>
+                        </div>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary mb-2">Database Design Principles</h3>
+                    <p class="text-text-secondary text-sm mb-4">Introduction to relational database design, normalization, and best practices for scalable applications.</p>
+                    <div class="flex items-center justify-between text-xs text-text-secondary">
+                        <span>Updated 1 week ago</span>
+                        <span>45 slides</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer" onclick="showNoteViewer('note3')">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-lg bg-yellow-50">
+                            <i class="fas fa-file-alt text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm text-text-secondary">
+                            <i class="fas fa-circle text-gray-400"></i>
+                            <span>0 online</span>
+                        </div>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary mb-2">JavaScript Fundamentals</h3>
+                    <p class="text-text-secondary text-sm mb-4">Core JavaScript concepts including ES6+ features, async programming, and modern development practices.</p>
+                    <div class="flex items-center justify-between text-xs text-text-secondary">
+                        <span>Updated 3 weeks ago</span>
+                        <span>18 pages</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer" onclick="showNoteViewer('note4')">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-lg bg-purple-50">
+                            <i class="fas fa-image text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm text-text-secondary">
+                            <i class="fas fa-circle text-green-500 online-indicator"></i>
+                            <span>2 online</span>
+                        </div>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary mb-2">Web Design Principles</h3>
+                    <p class="text-text-secondary text-sm mb-4">Visual design principles, color theory, typography, and user experience best practices for web applications.</p>
+                    <div class="flex items-center justify-between text-xs text-text-secondary">
+                        <span>Updated 4 days ago</span>
+                        <span>32 images</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: TeacherNotesView -->
+
+<!-- @COMPONENT: NoteViewer -->
+<div id="note-viewer" class="hidden min-h-screen bg-background">
+    <!-- Note Viewer Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-full px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showTeacherNotes()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-arrow-left text-text-secondary"></i>
+                    </button>
+                    <div>
+                        <h1 class="font-heading text-lg font-bold text-text-primary" data-bind="note.title">Advanced React Patterns</h1>
+                        <p class="text-sm text-text-secondary" data-bind="note.teacher">Dr. Sarah Johnson • Computer Science</p>
+                    </div>
+                </div>
+                
+                <!-- Collaboration Tools -->
+                <div class="flex items-center space-x-4">
+                    <!-- Online Users -->
+                    <div class="flex items-center space-x-2">
+                        <div class="flex -space-x-2">
+                            <!-- Active student viewing the same note -->
+                            <img src="https://pixabay.com/get/g0f922bd002e62ec51c489652fa3cbf5574dc98aebd7cfb1f388b6754a50f5890a81609ebe5cc5878c5ee4cb2fa8dfff52c826d5ca7fcaeecb8e77e8a4f8f4e80_1280.jpg" alt="Emily Chen - Active Student" class="w-8 h-8 rounded-full border-2 border-white">
+                            <!-- Another student collaborating on the document -->
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Alex Kim - Collaborative Student" class="w-8 h-8 rounded-full border-2 border-white">
+                            <div class="w-8 h-8 bg-primary text-white rounded-full border-2 border-white flex items-center justify-center text-xs font-medium">+2</div>
+                        </div>
+                        <span class="text-sm text-text-secondary" data-bind="onlineUsers.count">5 online</span>
+                    </div>
+                    
+                    <!-- Tools -->
+                    <div class="flex items-center space-x-2 border-l pl-4">
+                        <button id="highlight-tool" class="p-2 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 transition-colors" title="Highlight Tool">
+                            <i class="fas fa-highlighter"></i>
+                        </button>
+                        <button id="laser-tool" class="p-2 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors" title="Laser Pointer">
+                            <i class="fas fa-hand-pointer"></i>
+                        </button>
+                        <button id="chat-toggle" class="p-2 rounded-lg hover:bg-blue-50 hover:text-primary transition-colors relative" title="Chat" onclick="toggleChat()">
+                            <i class="fas fa-comment"></i>
+                            <span class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                        </button>
+                        <button id="video-call" class="p-2 rounded-lg hover:bg-green-50 hover:text-secondary transition-colors" title="Video Call" onclick="startVideoCall()">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="flex h-screen">
+        <!-- Note Content Area -->
+        <div class="flex-1 relative">
+            <!-- Note Content -->
+            <div class="p-8 max-w-4xl mx-auto">
+                <!-- @FUNCTIONALITY: This note viewer should display PDF, PPT, images, and text content with real-time collaboration features -->
+                
+                <!-- Laser Cursors Container -->
+                <div id="laser-cursors" class="absolute inset-0 pointer-events-none z-20">
+                    <!-- @STATE: activeCursors:Array = [] -->
+                    <!-- Laser cursor for user "Emily" - bright blue indicating active collaboration -->
+                    <div class="laser-cursor bg-blue-500" style="top: 150px; left: 200px;" data-user="Emily">
+                        <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">Emily</div>
+                    </div>
+                    <!-- Laser cursor for user "Alex" - green color showing another active participant -->
+                    <div class="laser-cursor bg-green-500" style="top: 300px; left: 400px;" data-user="Alex">
+                        <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">Alex</div>
+                    </div>
+                </div>
+                
+                <!-- Document Content -->
+                <div class="bg-white rounded-lg shadow-sm border p-8 relative z-10">
+                    <article class="prose prose-lg max-w-none">
+                        <h1 class="font-heading text-3xl font-bold text-text-primary mb-6">Advanced React Patterns</h1>
+                        
+                        <h2 class="font-heading text-2xl font-bold text-text-primary mt-8 mb-4">1. Higher-Order Components (HOCs)</h2>
+                        
+                        <p class="text-text-primary leading-relaxed mb-4">
+                            <span class="highlight-selection">Higher-Order Components are a powerful pattern in React that allows you to reuse component logic.</span> 
+                            An HOC is a function that takes a component and returns a new component with enhanced functionality.
+                        </p>
+                        
+                        <div class="bg-gray-50 rounded-lg p-6 my-6">
+                            <h4 class="font-bold text-text-primary mb-3">Code Example:</h4>
+                            <pre class="bg-gray-800 text-green-400 p-4 rounded overflow-x-auto"><code>const withAuth = (WrappedComponent) => {
+  return (props) => {
+    const { isAuthenticated } = useAuth();
+    
+    if (!isAuthenticated) {
+      return &lt;LoginComponent /&gt;;
+    }
+    
+    return &lt;WrappedComponent {...props} /&gt;;
+  };
+};</code></pre>
+                        </div>
+                        
+                        <h2 class="font-heading text-2xl font-bold text-text-primary mt-8 mb-4">2. Render Props Pattern</h2>
+                        
+                        <p class="text-text-primary leading-relaxed mb-4">
+                            The render props pattern is a technique for sharing code between components using a prop whose value is a function. 
+                            <span class="highlight-selection">This pattern provides maximum flexibility and composability.</span>
+                        </p>
+                        
+                        <div class="bg-blue-50 border-l-4 border-primary p-6 my-6">
+                            <h4 class="font-bold text-primary mb-2">💡 Key Benefits:</h4>
+                            <ul class="list-disc list-inside text-text-primary space-y-1">
+                                <li>Highly reusable and composable</li>
+                                <li>Clear separation of concerns</li>
+                                <li>Easy to test and maintain</li>
+                            </ul>
+                        </div>
+                        
+                        <h2 class="font-heading text-2xl font-bold text-text-primary mt-8 mb-4">3. Custom Hooks</h2>
+                        
+                        <p class="text-text-primary leading-relaxed mb-4">
+                            Custom hooks are JavaScript functions that start with "use" and can call other hooks. 
+                            They allow you to extract component logic into reusable functions.
+                        </p>
+                        
+                        <div class="bg-gray-50 rounded-lg p-6 my-6">
+                            <h4 class="font-bold text-text-primary mb-3">useLocalStorage Hook Example:</h4>
+                            <pre class="bg-gray-800 text-green-400 p-4 rounded overflow-x-auto"><code>const useLocalStorage = (key, initialValue) => {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  return [storedValue, setValue];
+};</code></pre>
+                        </div>
+                        
+                        <h2 class="font-heading text-2xl font-bold text-text-primary mt-8 mb-4">4. Context API with Reducers</h2>
+                        
+                        <p class="text-text-primary leading-relaxed mb-4">
+                            <span class="highlight-selection">Combining React Context with useReducer provides a powerful state management solution</span> 
+                            for complex applications without the need for external libraries like Redux.
+                        </p>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 my-6">
+                            <h4 class="font-bold text-yellow-700 mb-2">⚠️ Performance Considerations:</h4>
+                            <p class="text-yellow-700">
+                                Be mindful of context value changes as they can cause unnecessary re-renders. 
+                                Consider splitting contexts or memoizing values when needed.
+                            </p>
+                        </div>
+                        
+                        <h2 class="font-heading text-2xl font-bold text-text-primary mt-8 mb-4">Conclusion</h2>
+                        
+                        <p class="text-text-primary leading-relaxed mb-4">
+                            These advanced React patterns provide powerful tools for building scalable and maintainable applications. 
+                            Choose the right pattern based on your specific use case and requirements.
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Sidebar -->
+        <div id="chat-sidebar" class="w-80 bg-white border-l border-gray-200 flex flex-col">
+            <!-- Chat Header -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-heading font-bold text-text-primary">Discussion</h3>
+                    <button onclick="toggleChat()" class="p-1 text-text-secondary hover:text-text-primary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="text-sm text-text-secondary mt-1">5 participants</p>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- @MAP: messages.map(message => ( -->
+                <div class="flex items-start space-x-3">
+                    <!-- Student asking a question about the React patterns -->
+                    <img src="https://pixabay.com/get/g7c8fa06e2790d87c457cb7b0cc5e3ee168591fe98b6f8ac60739f5d4ed87f63c7bcc39eda6418dcf0434b73a105b877921203f78cbe8d1da969b6ddd02d42694_1280.jpg" alt="Emily Chen asking question" class="w-8 h-8 rounded-full">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-text-primary text-sm" data-bind="message.user">Emily</span>
+                            <span class="text-xs text-text-secondary" data-bind="message.time">2 min ago</span>
+                        </div>
+                        <p class="text-sm text-text-primary mt-1" data-bind="message.text">Can you explain more about when to use HOCs vs custom hooks?</p>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+                
+                <div class="flex items-start space-x-3">
+                    <!-- Another student responding with insight -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Alex Kim providing answer" class="w-8 h-8 rounded-full">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-text-primary text-sm">Alex</span>
+                            <span class="text-xs text-text-secondary">1 min ago</span>
+                        </div>
+                        <p class="text-sm text-text-primary mt-1">I think custom hooks are better for state logic, while HOCs are good for wrapping components with additional props or behavior.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <!-- Teacher providing guidance and clarification -->
+                    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=32&h=32&fit=crop&crop=face" alt="Dr. Sarah Johnson providing guidance" class="w-8 h-8 rounded-full border-2 border-primary">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-primary text-sm">Dr. Johnson</span>
+                            <span class="bg-primary text-white px-2 py-0.5 rounded-full text-xs">Teacher</span>
+                            <span class="text-xs text-text-secondary">30 sec ago</span>
+                        </div>
+                        <p class="text-sm text-text-primary mt-1">Great question! Custom hooks are indeed preferred for stateful logic, while HOCs are useful for cross-cutting concerns like authentication or analytics.</p>
+                    </div>
+                </div>
+                
+                <!-- AI Moderation Notice -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-robot text-primary text-sm"></i>
+                        <span class="text-xs text-primary font-medium">AI Moderator</span>
+                    </div>
+                    <p class="text-xs text-primary mt-1">This conversation is being monitored to ensure educational and respectful discussion.</p>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex space-x-2">
+                    <input type="text" placeholder="Type your message..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm" data-implementation="Should validate and moderate messages through AI">
+                    <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 mt-2">
+                    <button class="text-text-secondary hover:text-primary text-sm">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button class="text-text-secondary hover:text-primary text-sm">
+                        <i class="fas fa-smile"></i>
+                    </button>
+                    <span class="text-xs text-text-secondary ml-auto">AI Moderated</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: NoteViewer -->
+
+<!-- @COMPONENT: StudyGroupsModal -->
+<div id="study-groups-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="font-heading text-2xl font-bold text-text-primary">Study Groups</h2>
+                <button onclick="hideStudyGroups()" class="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-text-secondary mt-2">Join existing groups or create your own study community</p>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6">
+            <!-- Create Group Button -->
+            <button class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors mb-6 flex items-center justify-center space-x-2">
+                <i class="fas fa-plus"></i>
+                <span>Create New Study Group</span>
+            </button>
+            
+            <!-- Study Groups List -->
+            <div class="space-y-4">
+                <!-- @MAP: studyGroups.map(group => ( -->
+                <div class="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors cursor-pointer">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-heading text-lg font-bold text-text-primary mb-2" data-bind="group.name">React Study Group</h3>
+                            <p class="text-text-secondary text-sm mb-3" data-bind="group.description">Focused on advanced React patterns and best practices. We meet twice a week to discuss course materials and work on projects together.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-users"></i>
+                                    <span data-bind="group.memberCount">12 members</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-calendar"></i>
+                                    <span data-bind="group.schedule">Mon, Wed 7PM</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500"></i>
+                                    <span data-bind="group.onlineNow">3 online now</span>
+                                </span>
+                            </div>
+                        </div>
+                        <button class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            Join Group
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+                
+                <div class="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors cursor-pointer">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-heading text-lg font-bold text-text-primary mb-2">Database Design Workshop</h3>
+                            <p class="text-text-secondary text-sm mb-3">Collaborative study sessions for database design principles. We work through real-world examples and share resources.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-users"></i>
+                                    <span>8 members</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Fri 6PM</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-green-500"></i>
+                                    <span>1 online now</span>
+                                </span>
+                            </div>
+                        </div>
+                        <button class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            Join Group
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors cursor-pointer">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-heading text-lg font-bold text-text-primary mb-2">JavaScript Fundamentals</h3>
+                            <p class="text-text-secondary text-sm mb-3">For students looking to strengthen their JavaScript foundations. We cover ES6+, async programming, and modern development practices.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-users"></i>
+                                    <span>15 members</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Tue, Thu 5PM</span>
+                                </span>
+                                <span class="flex items-center space-x-1">
+                                    <i class="fas fa-circle text-gray-400"></i>
+                                    <span>0 online now</span>
+                                </span>
+                            </div>
+                        </div>
+                        <button class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            Join Group
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: StudyGroupsModal -->
+
+<!-- @COMPONENT: UploadModal -->
+<div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="font-heading text-2xl font-bold text-text-primary">Upload Course Material</h2>
+                <button onclick="hideUploadModal()" class="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6">
+            <form class="space-y-6" data-implementation="Should handle file uploads and metadata">
+                <!-- Title -->
+                <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Title</label>
+                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter material title...">
+                </div>
+                
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Description</label>
+                    <textarea rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Describe your material..."></textarea>
+                </div>
+                
+                <!-- File Upload -->
+                <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">File Upload</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-text-primary font-medium">Drop files here or click to upload</p>
+                        <p class="text-text-secondary text-sm mt-1">Supports PDF, PPT, DOCX, images (max 50MB)</p>
+                        <input type="file" class="hidden" multiple accept=".pdf,.ppt,.pptx,.doc,.docx,.jpg,.jpeg,.png,.gif">
+                    </div>
+                </div>
+                
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Category</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option>Lecture Notes</option>
+                        <option>Assignment</option>
+                        <option>Reference Material</option>
+                        <option>Project Guidelines</option>
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-4 pt-4">
+                    <button type="button" onclick="hideUploadModal()" class="flex-1 bg-gray-100 text-text-primary py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Upload Material
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: UploadModal -->
+
+<!-- @COMPONENT: VideoCallModal -->
+<div id="video-call-modal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        <!-- Video Call Header -->
+        <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="font-heading text-lg font-bold text-text-primary">Video Discussion</h3>
+                    <p class="text-sm text-text-secondary">Advanced React Patterns • 3 participants</p>
+                </div>
+                <button onclick="endVideoCall()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2">
+                    <i class="fas fa-phone-slash"></i>
+                    <span>End Call</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Video Grid -->
+        <div class="p-4 bg-gray-900">
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 h-96">
+                <!-- @FUNCTIONALITY: This should implement WebRTC video calling functionality -->
+                
+                <!-- Local Video -->
+                <div class="relative bg-gray-800 rounded-lg overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <!-- Student participant in video call - Emily -->
+                        <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face" alt="Emily Chen in video call" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        Emily (You)
+                    </div>
+                    <div class="absolute top-2 right-2">
+                        <i class="fas fa-microphone text-white"></i>
+                    </div>
+                </div>
+                
+                <!-- Remote Video 1 -->
+                <div class="relative bg-gray-800 rounded-lg overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <!-- Another student participant - Alex -->
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face" alt="Alex Kim in video call" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        Alex
+                    </div>
+                    <div class="absolute top-2 right-2">
+                        <i class="fas fa-microphone text-white"></i>
+                    </div>
+                </div>
+                
+                <!-- Remote Video 2 -->
+                <div class="relative bg-gray-800 rounded-lg overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <!-- Teacher joining the discussion -->
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face" alt="Dr. Johnson in video call" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        Dr. Johnson
+                    </div>
+                    <div class="absolute top-2 right-2">
+                        <i class="fas fa-microphone text-white"></i>
+                    </div>
+                    <div class="absolute top-2 left-2 bg-primary text-white px-2 py-0.5 rounded text-xs">Teacher</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Controls -->
+        <div class="p-4 bg-gray-50 border-t">
+            <div class="flex justify-center space-x-4">
+                <button class="bg-gray-600 text-white p-3 rounded-full hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="bg-gray-600 text-white p-3 rounded-full hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="bg-primary text-white p-3 rounded-full hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-desktop"></i>
+                </button>
+                <button class="bg-secondary text-white p-3 rounded-full hover:bg-green-600 transition-colors">
+                    <i class="fas fa-comment"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- @END_COMPONENT: VideoCallModal -->
+
+<script>
+    // TODO: Implement proper authentication, real-time collaboration, and WebRTC functionality
+    
+    (function() {
+        // Navigation Functions
+        window.showTeacherLogin = function() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('teacher-dashboard').classList.remove('hidden');
+        };
+        
+        window.showStudentLogin = function() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('student-dashboard').classList.remove('hidden');
+        };
+        
+        window.showLandingPage = function() {
+            document.querySelectorAll('.min-h-screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById('landing-page').classList.remove('hidden');
+        };
+        
+        window.showStudentDashboard = function() {
+            document.querySelectorAll('.min-h-screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById('student-dashboard').classList.remove('hidden');
+        };
+        
+        window.showTeacherNotes = function(teacherId) {
+            document.getElementById('student-dashboard').classList.add('hidden');
+            document.getElementById('teacher-notes-view').classList.remove('hidden');
+        };
+        
+        window.showNoteViewer = function(noteId) {
+            document.getElementById('teacher-notes-view').classList.add('hidden');
+            document.getElementById('note-viewer').classList.remove('hidden');
+        };
+        
+        // Modal Functions
+        window.showUploadModal = function() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        };
+        
+        window.hideUploadModal = function() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        };
+        
+        window.showStudyGroups = function() {
+            document.getElementById('study-groups-modal').classList.remove('hidden');
+        };
+        
+        window.hideStudyGroups = function() {
+            document.getElementById('study-groups-modal').classList.add('hidden');
+        };
+        
+        // Chat Functions
+        window.toggleChat = function() {
+            const chatSidebar = document.getElementById('chat-sidebar');
+            chatSidebar.classList.toggle('hidden');
+        };
+        
+        // Video Call Functions
+        window.startVideoCall = function() {
+            document.getElementById('video-call-modal').classList.remove('hidden');
+            // TODO: Initialize WebRTC connection
+        };
+        
+        window.endVideoCall = function() {
+            document.getElementById('video-call-modal').classList.add('hidden');
+            // TODO: Close WebRTC connection
+        };
+        
+        // Collaboration Tools
+        let highlightMode = false;
+        let laserMode = false;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight Tool
+            const highlightTool = document.getElementById('highlight-tool');
+            if (highlightTool) {
+                highlightTool.addEventListener('click', function() {
+                    highlightMode = !highlightMode;
+                    this.classList.toggle('bg-yellow-100');
+                    this.classList.toggle('text-yellow-700');
+                    // TODO: Implement text selection and highlighting with real-time sync
+                });
+            }
+            
+            // Laser Tool
+            const laserTool = document.getElementById('laser-tool');
+            if (laserTool) {
+                laserTool.addEventListener('click', function() {
+                    laserMode = !laserMode;
+                    this.classList.toggle('bg-red-100');
+                    this.classList.toggle('text-red-700');
+                    // TODO: Implement laser cursor functionality with WebSocket sync
+                });
+            }
+            
+            // Simulate laser cursor movement
+            const laserCursors = document.querySelectorAll('.laser-cursor');
+            laserCursors.forEach(cursor => {
+                setInterval(() => {
+                    const randomX = Math.random() * 50;
+                    const randomY = Math.random() * 50;
+                    cursor.style.transform = `translate(${randomX}px, ${randomY}px)`;
+                }, 2000);
+            });
+        });
+        
+        // Close modals on outside click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('fixed')) {
+                if (e.target.id === 'upload-modal') hideUploadModal();
+                if (e.target.id === 'study-groups-modal') hideStudyGroups();
+                if (e.target.id === 'video-call-modal') endVideoCall();
+            }
+        });
+    })();
+</script>
+
+</body>
+</html>

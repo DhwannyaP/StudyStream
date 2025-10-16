@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 import { useState } from "react";
 import {
   Shield,
@@ -20,10 +21,9 @@ import {
   Eye,
   Search,
   GraduationCap,
-  Bell,
   UserCheck,
   UserX,
-  Trash2
+  Trash2,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -35,79 +35,101 @@ export default function AdminDashboard() {
 
   // Queries
   const { data: allUsers, isLoading: usersLoading } = useQuery({
-    queryKey: ['/api/admin/users'],
+    queryKey: ["/api/admin/users"],
   });
 
   const { data: allNotes, isLoading: notesLoading } = useQuery({
-    queryKey: ['/api/notes'],
+    queryKey: ["/api/notes"],
   });
 
   const { data: moderationLogs, isLoading: logsLoading } = useQuery({
-    queryKey: ['/api/admin/moderation-logs'],
+    queryKey: ["/api/admin/moderation-logs"],
   });
 
   const { data: userApprovals, isLoading: approvalsLoading } = useQuery({
-    queryKey: ['/api/admin/user-approvals'],
+    queryKey: ["/api/admin/user-approvals"],
   });
 
   // Mutations
   const approveUserMutation = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
-      await apiRequest(`/api/admin/users/${userId}/approve`, {
-        method: 'POST',
-        body: JSON.stringify({ reason }),
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason?: string;
+    }) => {
+      await apiRequest("POST", `/api/admin/users/${userId}/approve`, {
+        reason,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/user-approvals'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/user-approvals"],
+      });
       toast({
         title: "User approved",
         description: "User has been successfully approved.",
       });
-    }
+    },
   });
 
   const rejectUserMutation = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      await apiRequest(`/api/admin/users/${userId}/reject`, {
-        method: 'POST',
-        body: JSON.stringify({ reason }),
-      });
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
+      await apiRequest("POST", `/api/admin/users/${userId}/reject`, { reason });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/user-approvals'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/user-approvals"],
+      });
       toast({
         title: "User rejected",
         description: "User registration has been rejected.",
       });
-    }
+    },
   });
 
   const deleteContentMutation = useMutation({
-    mutationFn: async ({ contentType, contentId }: { contentType: string; contentId: string }) => {
-      if (contentType === 'note') {
-        await apiRequest(`/api/notes/${contentId}`, { method: 'DELETE' });
+    mutationFn: async ({
+      contentType,
+      contentId,
+    }: {
+      contentType: string;
+      contentId: string;
+    }) => {
+      if (contentType === "note") {
+        await apiRequest("DELETE", `/api/notes/${contentId}`);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       toast({
         title: "Content deleted",
         description: "Content has been successfully removed.",
       });
-    }
+    },
   });
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You don't have admin privileges to access this page.</p>
-          <Button onClick={() => setLocation('/')}>Go Home</Button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 mb-4">
+            You don't have admin privileges to access this page.
+          </p>
+          <Button onClick={() => setLocation("/")}>Go Home</Button>
         </div>
       </div>
     );
@@ -121,18 +143,20 @@ export default function AdminDashboard() {
 
   const stats = {
     totalUsers: usersArray.length,
-    teachers: usersArray.filter(u => u.role === 'teacher').length,
-    students: usersArray.filter(u => u.role === 'student').length,
+    teachers: usersArray.filter((u) => u.role === "teacher").length,
+    students: usersArray.filter((u) => u.role === "student").length,
     totalNotes: notesArray.length,
-    pendingApprovals: approvalsArray.filter(a => a.status === 'pending').length,
-    flaggedContent: logsArray.filter(l => l.action === 'flagged').length,
+    pendingApprovals: approvalsArray.filter((a) => a.status === "pending")
+      .length,
+    flaggedContent: logsArray.filter((l) => l.action === "flagged").length,
   };
 
   // Filter users based on search
-  const filteredUsers = usersArray.filter(u =>
-    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = usersArray.filter(
+    (u) =>
+      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -143,24 +167,21 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <Shield className="text-red-600 h-8 w-8" />
-              <span className="font-heading text-2xl font-bold">EduCollab Admin</span>
+              <span className="font-heading text-2xl font-bold">
+                EduCollab Admin
+              </span>
               <Badge className="bg-red-600 text-white">Administrator</Badge>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                {stats.pendingApprovals > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-600 text-white text-xs">
-                    {stats.pendingApprovals}
-                  </Badge>
-                )}
-              </Button>
+              <NotificationDropdown />
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.profileImage || undefined} />
                   <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="text-gray-700 font-medium">{user.fullName}</span>
+                <span className="text-gray-700 font-medium">
+                  {user.fullName}
+                </span>
               </div>
               <Button onClick={logout} variant="ghost" size="sm">
                 Sign Out
@@ -172,11 +193,19 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Administration Dashboard</h1>
-          <p className="text-gray-600">Monitor and manage the educational platform</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Administration Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Monitor and manage the educational platform
+          </p>
         </div>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+        <Tabs
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
@@ -189,7 +218,9 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Users
+                  </CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -202,18 +233,24 @@ export default function AdminDashboard() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Educational Content</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Educational Content
+                  </CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalNotes}</div>
-                  <p className="text-xs text-muted-foreground">Active learning materials</p>
+                  <p className="text-xs text-muted-foreground">
+                    Active learning materials
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Pending Actions
+                  </CardTitle>
                   <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 </CardHeader>
                 <CardContent>
@@ -221,7 +258,8 @@ export default function AdminDashboard() {
                     {stats.pendingApprovals + stats.flaggedContent}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {stats.pendingApprovals} approvals, {stats.flaggedContent} flagged
+                    {stats.pendingApprovals} approvals, {stats.flaggedContent}{" "}
+                    flagged
                   </p>
                 </CardContent>
               </Card>
@@ -234,14 +272,14 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button 
+                  <Button
                     onClick={() => setSelectedTab("users")}
                     className="flex items-center space-x-2"
                   >
                     <UserCheck className="h-4 w-4" />
                     <span>Review User Registrations</span>
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => setSelectedTab("content")}
                     className="flex items-center space-x-2"
@@ -249,7 +287,7 @@ export default function AdminDashboard() {
                     <Eye className="h-4 w-4" />
                     <span>Moderate Content</span>
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => setSelectedTab("logs")}
                     className="flex items-center space-x-2"
@@ -292,23 +330,31 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-4">
                           <Avatar className="h-12 w-12">
                             <AvatarImage src={u.profileImage || undefined} />
-                            <AvatarFallback>{u.fullName.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>
+                              {u.fullName.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-semibold text-lg">{u.fullName}</h3>
+                            <h3 className="font-semibold text-lg">
+                              {u.fullName}
+                            </h3>
                             <p className="text-gray-600">{u.email}</p>
                             <div className="flex items-center space-x-2 mt-1">
-                              <Badge 
+                              <Badge
                                 className={
-                                  u.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
-                                  u.role === 'student' ? 'bg-green-100 text-green-800' :
-                                  'bg-red-100 text-red-800'
+                                  u.role === "teacher"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : u.role === "student"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
                                 }
                               >
                                 {u.role}
                               </Badge>
                               {u.department && (
-                                <span className="text-sm text-gray-500">{u.department}</span>
+                                <span className="text-sm text-gray-500">
+                                  {u.department}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -316,7 +362,9 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
-                            onClick={() => approveUserMutation.mutate({ userId: u.id })}
+                            onClick={() =>
+                              approveUserMutation.mutate({ userId: u.id })
+                            }
                             disabled={approveUserMutation.isPending}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
@@ -325,10 +373,12 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => rejectUserMutation.mutate({ 
-                              userId: u.id, 
-                              reason: "Account rejected by administrator" 
-                            })}
+                            onClick={() =>
+                              rejectUserMutation.mutate({
+                                userId: u.id,
+                                reason: "Account rejected by administrator",
+                              })
+                            }
                             disabled={rejectUserMutation.isPending}
                           >
                             <UserX className="h-4 w-4 mr-1" />
@@ -345,7 +395,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="content" className="space-y-6">
             <h2 className="text-2xl font-bold">Content Oversight</h2>
-            
+
             {notesLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -358,12 +408,19 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{note.title}</h3>
-                          <p className="text-gray-600 mt-1">{note.description}</p>
+                          <h3 className="font-semibold text-lg">
+                            {note.title}
+                          </h3>
+                          <p className="text-gray-600 mt-1">
+                            {note.description}
+                          </p>
                           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                             <span>By Teacher ID: {note.teacherId}</span>
                             <span>{note.viewCount || 0} views</span>
-                            <span>Created {new Date(note.createdAt).toLocaleDateString()}</span>
+                            <span>
+                              Created{" "}
+                              {new Date(note.createdAt).toLocaleDateString()}
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -374,10 +431,12 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => deleteContentMutation.mutate({ 
-                              contentType: 'note', 
-                              contentId: note.id 
-                            })}
+                            onClick={() =>
+                              deleteContentMutation.mutate({
+                                contentType: "note",
+                                contentId: note.id,
+                              })
+                            }
                             disabled={deleteContentMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
@@ -394,7 +453,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="logs" className="space-y-6">
             <h2 className="text-2xl font-bold">Activity Logs</h2>
-            
+
             {logsLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -415,21 +474,34 @@ export default function AdminDashboard() {
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className={`p-2 rounded-full ${
-                              log.action === 'approved' ? 'bg-green-100' :
-                              log.action === 'rejected' ? 'bg-red-100' :
-                              log.action === 'flagged' ? 'bg-yellow-100' :
-                              'bg-gray-100'
-                            }`}>
-                              {log.action === 'approved' && <CheckCircle className="h-5 w-5 text-green-600" />}
-                              {log.action === 'rejected' && <XCircle className="h-5 w-5 text-red-600" />}
-                              {log.action === 'flagged' && <AlertTriangle className="h-5 w-5 text-yellow-600" />}
+                            <div
+                              className={`p-2 rounded-full ${
+                                log.action === "approved"
+                                  ? "bg-green-100"
+                                  : log.action === "rejected"
+                                  ? "bg-red-100"
+                                  : log.action === "flagged"
+                                  ? "bg-yellow-100"
+                                  : "bg-gray-100"
+                              }`}
+                            >
+                              {log.action === "approved" && (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              )}
+                              {log.action === "rejected" && (
+                                <XCircle className="h-5 w-5 text-red-600" />
+                              )}
+                              {log.action === "flagged" && (
+                                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                              )}
                             </div>
                             <div>
                               <h3 className="font-semibold">
                                 {log.contentType} {log.action}
                               </h3>
-                              <p className="text-gray-600">{log.reason || 'No reason provided'}</p>
+                              <p className="text-gray-600">
+                                {log.reason || "No reason provided"}
+                              </p>
                               <p className="text-sm text-gray-500">
                                 {new Date(log.createdAt).toLocaleString()}
                               </p>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -7,39 +8,51 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import UploadModal from "@/components/modals/upload-modal";
+import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 import { useState } from "react";
-import { GraduationCap, Bell, FileText, Users, Eye, MessageCircle, Plus, BarChart3, Edit, Trash2 } from "lucide-react";
+import {
+  GraduationCap,
+  FileText,
+  Users,
+  Eye,
+  MessageCircle,
+  Plus,
+  BarChart3,
+  Edit,
+  Trash2,
+} from "lucide-react";
 
 export default function TeacherDashboard() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   const { data: notes, isLoading: notesLoading } = useQuery({
-    queryKey: ['/api/notes'],
+    queryKey: ["/api/notes"],
   });
 
   const { data: sessions } = useQuery({
-    queryKey: ['/api/sessions'],
+    queryKey: ["/api/sessions"],
   });
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (noteId: string) => {
-      const sessionId = localStorage.getItem('sessionId');
+      const sessionId = localStorage.getItem("sessionId");
       const response = await fetch(`/api/notes/${noteId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${sessionId}`
-        }
+          Authorization: `Bearer ${sessionId}`,
+        },
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       toast({
         title: "Note deleted",
         description: "The note has been successfully deleted.",
@@ -51,7 +64,7 @@ export default function TeacherDashboard() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   if (!user) return null;
@@ -59,7 +72,10 @@ export default function TeacherDashboard() {
   // Calculate stats - ensure notes is array
   const notesArray = Array.isArray(notes) ? notes : [];
   const totalNotes = notesArray.length;
-  const totalViews = notesArray.reduce((sum: number, note: any) => sum + (note.viewCount || 0), 0);
+  const totalViews = notesArray.reduce(
+    (sum: number, note: any) => sum + (note.viewCount || 0),
+    0
+  );
   const sessionsArray = Array.isArray(sessions) ? sessions : [];
   const activeStudents = sessionsArray.filter((s: any) => s.isActive).length;
 
@@ -72,21 +88,18 @@ export default function TeacherDashboard() {
             <div className="flex items-center space-x-4">
               <GraduationCap className="text-primary h-8 w-8" />
               <span className="font-heading text-2xl font-bold">EduCollab</span>
-              <Badge className="bg-primary text-white">Teacher</Badge>
+              <Badge>Teacher</Badge>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-accent text-white text-xs">
-                  3
-                </Badge>
-              </Button>
+              <NotificationDropdown />
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.profileImage || undefined} />
                   <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="text-edu-text-primary font-medium">{user.fullName}</span>
+                <span className="text-edu-text-primary font-medium">
+                  {user.fullName}
+                </span>
               </div>
               <Button onClick={logout} variant="ghost" size="sm">
                 Sign Out
@@ -95,7 +108,7 @@ export default function TeacherDashboard() {
           </div>
         </div>
       </nav>
-      
+
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
@@ -103,9 +116,11 @@ export default function TeacherDashboard() {
           <h1 className="font-heading text-3xl font-bold text-edu-text-primary mb-2">
             Welcome back, {user.fullName}!
           </h1>
-          <p className="text-edu-text-secondary">Manage your course materials and track student engagement.</p>
+          <p className="text-edu-text-secondary">
+            Manage your course materials and track student engagement.
+          </p>
         </div>
-        
+
         {/* Quick Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -116,12 +131,14 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-edu-text-secondary text-sm">Total Notes</p>
-                  <p className="text-2xl font-bold text-edu-text-primary">{totalNotes}</p>
+                  <p className="text-2xl font-bold text-edu-text-primary">
+                    {totalNotes}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -129,13 +146,17 @@ export default function TeacherDashboard() {
                   <Users className="text-secondary h-6 w-6" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-edu-text-secondary text-sm">Active Students</p>
-                  <p className="text-2xl font-bold text-edu-text-primary">{activeStudents}</p>
+                  <p className="text-edu-text-secondary text-sm">
+                    Active Students
+                  </p>
+                  <p className="text-2xl font-bold text-edu-text-primary">
+                    {activeStudents}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -144,12 +165,14 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-edu-text-secondary text-sm">Total Views</p>
-                  <p className="text-2xl font-bold text-edu-text-primary">{totalViews}</p>
+                  <p className="text-2xl font-bold text-edu-text-primary">
+                    {totalViews}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -164,32 +187,36 @@ export default function TeacherDashboard() {
             </CardContent>
           </Card>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <Button 
-            onClick={() => setShowUploadModal(true)}
-            className="bg-primary text-white hover:bg-blue-700"
-          >
+          <Button onClick={() => setShowUploadModal(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Upload New Material
           </Button>
-          <Button className="bg-secondary text-white hover:bg-green-600">
+          <Button
+            variant="secondary"
+            onClick={() => setLocation("/study-groups")}
+          >
             <Users className="mr-2 h-4 w-4" />
             Manage Study Groups
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setLocation("/analytics")}>
             <BarChart3 className="mr-2 h-4 w-4" />
             View Analytics
           </Button>
         </div>
-        
+
         {/* Recent Materials */}
         <Card>
           <div className="p-6 border-b">
             <div className="flex justify-between items-center">
-              <h2 className="font-heading text-xl font-bold text-edu-text-primary">Recent Materials</h2>
-              <Button variant="link">View All</Button>
+              <h2 className="font-heading text-xl font-bold text-edu-text-primary">
+                Recent Materials
+              </h2>
+              <Button variant="link" onClick={() => setLocation("/analytics")}>
+                View All
+              </Button>
             </div>
           </div>
           <CardContent className="p-6">
@@ -202,21 +229,33 @@ export default function TeacherDashboard() {
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-edu-text-secondary">No notes uploaded yet</p>
-                <p className="text-sm text-edu-text-secondary">Upload your first material to get started</p>
+                <p className="text-sm text-edu-text-secondary">
+                  Upload your first material to get started
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {notesArray.map((note: any) => (
-                  <div key={note.id} className="flex items-center justify-between py-4 border-b last:border-b-0">
+                  <div
+                    key={note.id}
+                    className="flex items-center justify-between py-4 border-b last:border-b-0"
+                  >
                     <div className="flex items-center space-x-4">
                       <div className="p-3 rounded-lg bg-blue-50">
                         <FileText className="text-primary h-6 w-6" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-edu-text-primary">{note.title}</h4>
-                        <p className="text-edu-text-secondary text-sm">{note.description}</p>
+                        <h4 className="font-medium text-edu-text-primary">
+                          {note.title}
+                        </h4>
+                        <p className="text-edu-text-secondary text-sm">
+                          {note.description}
+                        </p>
                         <div className="flex items-center space-x-4 mt-1 text-xs text-edu-text-secondary">
-                          <span>Uploaded {new Date(note.createdAt).toLocaleDateString()}</span>
+                          <span>
+                            Uploaded{" "}
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </span>
                           <span>{note.viewCount || 0} views</span>
                           <span className="flex items-center space-x-1">
                             <div className="w-2 h-2 bg-green-500 rounded-full online-indicator"></div>
@@ -226,11 +265,15 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button size="sm" variant="ghost">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setLocation(`/note/${note.id}`)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="ghost"
                         onClick={() => deleteNoteMutation.mutate(note.id)}
                         disabled={deleteNoteMutation.isPending}
@@ -246,10 +289,7 @@ export default function TeacherDashboard() {
         </Card>
       </div>
 
-      <UploadModal 
-        open={showUploadModal} 
-        onOpenChange={setShowUploadModal} 
-      />
+      <UploadModal open={showUploadModal} onOpenChange={setShowUploadModal} />
     </div>
   );
 }

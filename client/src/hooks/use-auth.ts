@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User } from '@shared/schema';
+import { useState, useEffect } from "react";
+import { User } from "@shared/schema";
 
 interface AuthState {
   user: User | null;
@@ -10,44 +10,44 @@ interface AuthState {
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
-    sessionId: localStorage.getItem('sessionId'),
-    isLoading: true
+    sessionId: localStorage.getItem("sessionId"),
+    isLoading: true,
   });
 
   useEffect(() => {
-    const sessionId = localStorage.getItem('sessionId');
+    const sessionId = localStorage.getItem("sessionId");
     if (sessionId) {
-      fetch('/api/auth/me', {
+      fetch("/api/auth/me", {
         headers: {
-          'Authorization': `Bearer ${sessionId}`
-        }
+          Authorization: `Bearer ${sessionId}`,
+        },
       })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(user => {
-        setAuthState({
-          user,
-          sessionId,
-          isLoading: false
+        .then((res) => (res.ok ? res.json() : Promise.reject()))
+        .then((user) => {
+          setAuthState({
+            user,
+            sessionId,
+            isLoading: false,
+          });
+        })
+        .catch(() => {
+          localStorage.removeItem("sessionId");
+          setAuthState({
+            user: null,
+            sessionId: null,
+            isLoading: false,
+          });
         });
-      })
-      .catch(() => {
-        localStorage.removeItem('sessionId');
-        setAuthState({
-          user: null,
-          sessionId: null,
-          isLoading: false
-        });
-      });
     } else {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
@@ -56,17 +56,17 @@ export function useAuth() {
     }
 
     const { user, sessionId } = await response.json();
-    localStorage.setItem('sessionId', sessionId);
+    localStorage.setItem("sessionId", sessionId);
     setAuthState({ user, sessionId, isLoading: false });
-    
+
     return user;
   };
 
   const register = async (userData: any) => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
     });
 
     if (!response.ok) {
@@ -75,28 +75,28 @@ export function useAuth() {
     }
 
     const { user, sessionId } = await response.json();
-    localStorage.setItem('sessionId', sessionId);
+    localStorage.setItem("sessionId", sessionId);
     setAuthState({ user, sessionId, isLoading: false });
-    
+
     return user;
   };
 
   const logout = async () => {
-    const sessionId = localStorage.getItem('sessionId');
+    const sessionId = localStorage.getItem("sessionId");
     if (sessionId) {
       try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
+        await fetch("/api/auth/logout", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${sessionId}`
-          }
+            Authorization: `Bearer ${sessionId}`,
+          },
         });
       } catch (error) {
-        console.error('Logout error:', error);
+        console.error("Logout error:", error);
       }
     }
-    
-    localStorage.removeItem('sessionId');
+
+    localStorage.removeItem("sessionId");
     setAuthState({ user: null, sessionId: null, isLoading: false });
   };
 
@@ -107,6 +107,6 @@ export function useAuth() {
     isAuthenticated: !!authState.user,
     login,
     register,
-    logout
+    logout,
   };
 }

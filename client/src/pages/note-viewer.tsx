@@ -9,9 +9,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChatPanel from "@/components/collaboration/chat-panel";
 import VideoCall from "@/components/collaboration/video-call";
 import LaserCursor from "@/components/collaboration/laser-cursor";
+import DocxViewer from "@/components/ui/docx-viewer";
+import SimpleDocxEditor from "@/components/ui/simple-docx-editor";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Highlighter, MousePointer, MessageCircle, Video, Users, Eye } from "lucide-react";
+import {
+  ArrowLeft,
+  Highlighter,
+  MousePointer,
+  MessageCircle,
+  Video,
+  Users,
+  Eye,
+  Edit3,
+} from "lucide-react";
 
 export default function NoteViewer() {
   const { noteId } = useParams();
@@ -24,44 +35,47 @@ export default function NoteViewer() {
   const [highlightMode, setHighlightMode] = useState(false);
   const [laserMode, setLaserMode] = useState(false);
   const [selectedText, setSelectedText] = useState<string>("");
+  const [isEditingDocx, setIsEditingDocx] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { data: note, isLoading: noteLoading } = useQuery({
-    queryKey: ['/api/notes', noteId],
+    queryKey: ["/api/notes", noteId],
   });
 
   const { data: sessions } = useQuery({
-    queryKey: ['/api/sessions', { noteId }],
+    queryKey: ["/api/sessions", { noteId }],
   });
 
   const { data: annotations } = useQuery({
-    queryKey: ['/api/annotations', noteId],
+    queryKey: ["/api/annotations", noteId],
   });
 
-  const cursors = useCursorTracking(noteId || '', user?.id || '');
-  const { highlights, messages, addHighlight, sendMessage } = useCollaboration(noteId || '');
+  const cursors = useCursorTracking(noteId || "", user?.id || "", laserMode);
+  const { highlights, messages, addHighlight, sendMessage } = useCollaboration(
+    noteId || ""
+  );
 
   const createAnnotationMutation = useMutation({
     mutationFn: async (annotationData: any) => {
-      const sessionId = localStorage.getItem('sessionId');
-      const response = await fetch('/api/annotations', {
-        method: 'POST',
+      const sessionId = localStorage.getItem("sessionId");
+      const response = await fetch("/api/annotations", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionId}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
         },
-        body: JSON.stringify(annotationData)
+        body: JSON.stringify(annotationData),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message);
       }
-      
+
       return response.json();
     },
     onSuccess: (annotation) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/annotations', noteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/annotations", noteId] });
       addHighlight(annotation);
       toast({
         title: "Highlight added",
@@ -74,21 +88,57 @@ export default function NoteViewer() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const saveDocxMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const sessionId = localStorage.getItem("sessionId");
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", noteId] });
+      setIsEditingDocx(false);
+      toast({
+        title: "Document saved",
+        description: "Your changes have been saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Save failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   useEffect(() => {
     if (!noteId || !user) return;
 
     // Create session when viewing note
-    const sessionId = localStorage.getItem('sessionId');
-    fetch('/api/sessions', {
-      method: 'POST',
+    const sessionId = localStorage.getItem("sessionId");
+    fetch("/api/sessions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionId}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionId}`,
       },
-      body: JSON.stringify({ noteId, userId: user.id })
+      body: JSON.stringify({ noteId, userId: user.id }),
     });
   }, [noteId, user]);
 
@@ -99,32 +149,35 @@ export default function NoteViewer() {
     if (selection && selection.toString().trim()) {
       const selectedText = selection.toString();
       const range = selection.getRangeAt(0);
-      
+
       // Create highlight annotation
       const annotationData = {
         noteId: noteId!,
-        type: 'highlight',
+        type: "highlight",
         content: selectedText,
         position: {
           start: range.startOffset,
           end: range.endOffset,
-          containerText: range.commonAncestorContainer.textContent?.substring(0, 50)
+          containerText: range.commonAncestorContainer.textContent?.substring(
+            0,
+            50
+          ),
         },
-        color: '#FFEB3B'
+        color: "#FFEB3B",
       };
 
       createAnnotationMutation.mutate(annotationData);
-      
+
       // Clear selection
       selection.removeAllRanges();
     }
   };
 
   const handleGoBack = () => {
-    if (note && typeof note === 'object' && 'teacher' in note) {
+    if (note && typeof note === "object" && "teacher" in note) {
       setLocation(`/teacher/${(note as any).teacher.id}/notes`);
     } else {
-      setLocation('/student/dashboard');
+      setLocation("/student/dashboard");
     }
   };
 
@@ -142,9 +195,16 @@ export default function NoteViewer() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-edu-text-primary mb-2">Note Not Found</h1>
-          <p className="text-edu-text-secondary">The note you're looking for doesn't exist.</p>
-          <Button onClick={() => setLocation('/student/dashboard')} className="mt-4">
+          <h1 className="text-2xl font-bold text-edu-text-primary mb-2">
+            Note Not Found
+          </h1>
+          <p className="text-edu-text-secondary">
+            The note you're looking for doesn't exist.
+          </p>
+          <Button
+            onClick={() => setLocation("/student/dashboard")}
+            className="mt-4"
+          >
             Back to Dashboard
           </Button>
         </div>
@@ -167,61 +227,91 @@ export default function NoteViewer() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="font-heading text-lg font-bold text-edu-text-primary">{note && typeof note === 'object' && 'title' in note ? (note as any).title : 'Note'}</h1>
+                <h1 className="font-heading text-lg font-bold text-edu-text-primary">
+                  {note && typeof note === "object" && "title" in note
+                    ? (note as any).title
+                    : "Note"}
+                </h1>
                 <p className="text-sm text-edu-text-secondary">
-                  {note && typeof note === 'object' && 'teacher' in note && (note as any).teacher ? `${(note as any).teacher.fullName} • ${(note as any).teacher.department}` : 'Loading...'}
+                  {note &&
+                  typeof note === "object" &&
+                  "teacher" in note &&
+                  (note as any).teacher
+                    ? `${(note as any).teacher.fullName} • ${
+                        (note as any).teacher.department
+                      }`
+                    : "Loading..."}
                 </p>
               </div>
             </div>
-            
+
             {/* Collaboration Tools */}
             <div className="flex items-center space-x-4">
               {/* Online Users */}
               <div className="flex items-center space-x-2">
                 <div className="flex -space-x-2">
-                  {onlineUsers.slice(0, 3).map((session: any, index: number) => (
-                    <Avatar key={session.id} className="w-8 h-8 border-2 border-white">
-                      <AvatarFallback className="text-xs">
-                        {session.user?.fullName?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
+                  {onlineUsers
+                    .slice(0, 3)
+                    .map((session: any, index: number) => (
+                      <Avatar
+                        key={session.id}
+                        className="w-8 h-8 border-2 border-white"
+                      >
+                        <AvatarFallback className="text-xs">
+                          {session.user?.fullName?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
                   {onlineCount > 3 && (
                     <div className="w-8 h-8 bg-primary text-white rounded-full border-2 border-white flex items-center justify-center text-xs font-medium">
                       +{onlineCount - 3}
                     </div>
                   )}
                 </div>
-                <span className="text-sm text-edu-text-secondary">{onlineCount} online</span>
+                <span className="text-sm text-edu-text-secondary">
+                  {onlineCount} online
+                </span>
               </div>
-              
+
               {/* Tools */}
               <div className="flex items-center space-x-2 border-l pl-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setHighlightMode(!highlightMode)}
-                  className={highlightMode ? 'bg-yellow-50 text-yellow-600' : 'hover:bg-yellow-50 hover:text-yellow-600'}
+                  className={
+                    highlightMode
+                      ? "bg-yellow-50 text-yellow-600"
+                      : "hover:bg-yellow-50 hover:text-yellow-600"
+                  }
                   title="Highlight Tool"
                 >
                   <Highlighter className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setLaserMode(!laserMode)}
-                  className={laserMode ? 'bg-red-50 text-red-600' : 'hover:bg-red-50 hover:text-red-600'}
+                  className={
+                    laserMode
+                      ? "bg-red-50 text-red-600"
+                      : "hover:bg-red-50 hover:text-red-600"
+                  }
                   title="Laser Pointer"
                 >
                   <MousePointer className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowChat(!showChat)}
-                  className={showChat ? 'bg-blue-50 text-primary' : 'hover:bg-blue-50 hover:text-primary'}
+                  className={
+                    showChat
+                      ? "bg-blue-50 text-primary"
+                      : "hover:bg-blue-50 hover:text-primary"
+                  }
                   title="Chat"
                 >
                   <MessageCircle className="h-4 w-4" />
@@ -231,12 +321,16 @@ export default function NoteViewer() {
                     </Badge>
                   )}
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowVideoCall(!showVideoCall)}
-                  className={showVideoCall ? 'bg-green-50 text-secondary' : 'hover:bg-green-50 hover:text-secondary'}
+                  className={
+                    showVideoCall
+                      ? "bg-green-50 text-secondary"
+                      : "hover:bg-green-50 hover:text-secondary"
+                  }
                   title="Video Call"
                 >
                   <Video className="h-4 w-4" />
@@ -246,7 +340,7 @@ export default function NoteViewer() {
           </div>
         </div>
       </nav>
-      
+
       <div className="flex h-screen">
         {/* Note Content Area */}
         <div className="flex-1 relative">
@@ -256,10 +350,10 @@ export default function NoteViewer() {
               key={userId}
               userId={userId}
               position={position}
-              color={`hsl(${userId.charCodeAt(0) * 137.5 % 360}, 70%, 50%)`}
+              color={`hsl(${(userId.charCodeAt(0) * 137.5) % 360}, 70%, 50%)`}
             />
           ))}
-          
+
           {/* Note Content */}
           <div className="p-8 max-w-4xl mx-auto">
             <div
@@ -269,33 +363,133 @@ export default function NoteViewer() {
             >
               <article className="prose prose-lg max-w-none">
                 <h1 className="font-heading text-3xl font-bold text-edu-text-primary mb-6">
-                  {note && typeof note === 'object' && 'title' in note ? (note as any).title : 'Note'}
+                  {note && typeof note === "object" && "title" in note
+                    ? (note as any).title
+                    : "Note"}
                 </h1>
-                
-                {note && typeof note === 'object' && 'fileUrl' in note && (note as any).fileUrl ? (
+
+                {note &&
+                typeof note === "object" &&
+                "fileUrl" in note &&
+                (note as any).fileUrl ? (
                   <div className="mb-6">
-                    {(note as any).fileType === 'image' ? (
-                      <img 
-                        src={`/${(note as any).fileUrl}`} 
-                        alt={(note as any).title || 'Note'}
-                        className="max-w-full h-auto rounded-lg"
-                      />
-                    ) : (note as any).fileType === 'application' ? (
-                      <div className="border rounded-lg p-6 text-center">
-                        <p className="text-edu-text-secondary mb-4">Document: {(note as any).fileName}</p>
-                        <Button asChild>
-                          <a href={`/${(note as any).fileUrl}`} download target="_blank">
-                            Download Document
-                          </a>
-                        </Button>
-                      </div>
-                    ) : (
-                      <iframe
-                        src={`/${(note as any).fileUrl}`}
-                        className="w-full h-96 border rounded-lg"
-                        title={(note as any).title || 'Note'}
-                      />
-                    )}
+                    {(() => {
+                      const raw = String((note as any).fileUrl || "");
+                      const normalized = raw
+                        .replace(/^\\\\/g, "")
+                        .replace(/^\/?/, "");
+                      const fileUrl = `/${normalized}`;
+                      const fileType = String(
+                        (note as any).fileType || ""
+                      ).toLowerCase();
+                      const fileName = String(
+                        (note as any).fileName || ""
+                      ).toLowerCase();
+
+                      if (fileType.startsWith("image")) {
+                        return (
+                          <img
+                            src={fileUrl}
+                            alt={(note as any).title || "Note"}
+                            className="max-w-full h-auto rounded-lg"
+                          />
+                        );
+                      }
+
+                      // Inline preview for PDFs
+                      const isPdf =
+                        fileType.includes("pdf") ||
+                        fileType === "application/pdf" ||
+                        fileName.endsWith(".pdf");
+                      if (isPdf) {
+                        return (
+                          <object
+                            data={fileUrl}
+                            type="application/pdf"
+                            className="w-full h-[80vh] border rounded-lg"
+                          >
+                            <iframe
+                              src={fileUrl}
+                              className="w-full h-[80vh] border rounded-lg"
+                              title={(note as any).title || "PDF Preview"}
+                            />
+                          </object>
+                        );
+                      }
+
+                      // DOCX file handling
+                      const isDocx =
+                        fileType.includes("docx") ||
+                        fileType ===
+                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                        fileName.endsWith(".docx");
+                      if (isDocx) {
+                        if (isEditingDocx) {
+                          return (
+                            <SimpleDocxEditor
+                              fileUrl={fileUrl}
+                              fileName={
+                                (note as any).fileName || "document.docx"
+                              }
+                              onSave={(content) =>
+                                saveDocxMutation.mutate(content)
+                              }
+                              onCancel={() => setIsEditingDocx(false)}
+                            />
+                          );
+                        } else {
+                          return (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">
+                                  Word Document
+                                </h3>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => setIsEditingDocx(true)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <Edit3 className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </Button>
+                                  <Button asChild size="sm" variant="outline">
+                                    <a
+                                      href={fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Download
+                                    </a>
+                                  </Button>
+                                </div>
+                              </div>
+                              <DocxViewer
+                                fileUrl={fileUrl}
+                                fileName={
+                                  (note as any).fileName || "document.docx"
+                                }
+                                onEdit={() => setIsEditingDocx(true)}
+                              />
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Fallback: show an open button in a new tab (browser handles preview/download)
+                      return (
+                        <div className="border rounded-lg p-6 text-center">
+                          <p className="text-edu-text-secondary mb-4">
+                            Document: {(note as any).fileName}
+                          </p>
+                          <Button asChild>
+                            <a href={fileUrl} target="_blank" rel="noreferrer">
+                              Open Document
+                            </a>
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="prose-content">
@@ -303,82 +497,104 @@ export default function NoteViewer() {
                     <h2 className="font-heading text-2xl font-bold text-edu-text-primary mt-8 mb-4">
                       1. Introduction to Advanced Concepts
                     </h2>
-                    
+
                     <p className="text-edu-text-primary leading-relaxed mb-4">
-                      {(note && typeof note === 'object' && 'description' in note && (note as any).description) || "This educational material covers important concepts that are fundamental to understanding the subject matter. Students should pay careful attention to the key principles outlined in this section."}
+                      {(note &&
+                        typeof note === "object" &&
+                        "description" in note &&
+                        (note as any).description) ||
+                        "This educational material covers important concepts that are fundamental to understanding the subject matter. Students should pay careful attention to the key principles outlined in this section."}
                     </p>
-                    
+
                     <div className="bg-gray-50 rounded-lg p-6 my-6">
-                      <h4 className="font-bold text-edu-text-primary mb-3">Key Learning Objectives:</h4>
+                      <h4 className="font-bold text-edu-text-primary mb-3">
+                        Key Learning Objectives:
+                      </h4>
                       <ul className="list-disc list-inside text-edu-text-primary space-y-1">
                         <li>Understand the fundamental principles</li>
-                        <li>Apply theoretical concepts to practical scenarios</li>
+                        <li>
+                          Apply theoretical concepts to practical scenarios
+                        </li>
                         <li>Develop critical thinking skills</li>
                         <li>Master problem-solving techniques</li>
                       </ul>
                     </div>
-                    
+
                     <h2 className="font-heading text-2xl font-bold text-edu-text-primary mt-8 mb-4">
                       2. Core Concepts
                     </h2>
-                    
+
                     <p className="text-edu-text-primary leading-relaxed mb-4">
-                      The following section explores the core concepts that form the foundation of this subject area. 
-                      These principles are essential for building a comprehensive understanding.
+                      The following section explores the core concepts that form
+                      the foundation of this subject area. These principles are
+                      essential for building a comprehensive understanding.
                     </p>
-                    
+
                     <div className="bg-blue-50 border-l-4 border-primary p-6 my-6">
-                      <h4 className="font-bold text-primary mb-2">💡 Important Note:</h4>
+                      <h4 className="font-bold text-primary mb-2">
+                        💡 Important Note:
+                      </h4>
                       <p className="text-edu-text-primary">
-                        Pay special attention to the relationships between different concepts. 
-                        Understanding these connections will help you grasp the bigger picture.
+                        Pay special attention to the relationships between
+                        different concepts. Understanding these connections will
+                        help you grasp the bigger picture.
                       </p>
                     </div>
-                    
+
                     <h2 className="font-heading text-2xl font-bold text-edu-text-primary mt-8 mb-4">
                       3. Practical Applications
                     </h2>
-                    
+
                     <p className="text-edu-text-primary leading-relaxed mb-4">
-                      Real-world applications demonstrate how theoretical knowledge can be applied in practice. 
-                      This section provides examples and case studies that illustrate key concepts.
+                      Real-world applications demonstrate how theoretical
+                      knowledge can be applied in practice. This section
+                      provides examples and case studies that illustrate key
+                      concepts.
                     </p>
-                    
+
                     <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 my-6">
-                      <h4 className="font-bold text-yellow-700 mb-2">⚠️ Study Tip:</h4>
+                      <h4 className="font-bold text-yellow-700 mb-2">
+                        ⚠️ Study Tip:
+                      </h4>
                       <p className="text-yellow-700">
-                        Work through the examples step by step. Try to understand not just what is happening, 
-                        but why each step is necessary.
+                        Work through the examples step by step. Try to
+                        understand not just what is happening, but why each step
+                        is necessary.
                       </p>
                     </div>
-                    
+
                     <h2 className="font-heading text-2xl font-bold text-edu-text-primary mt-8 mb-4">
                       Conclusion
                     </h2>
-                    
+
                     <p className="text-edu-text-primary leading-relaxed mb-4">
-                      This material provides a comprehensive foundation for understanding the subject. 
-                      Review the key concepts regularly and don't hesitate to ask questions during discussions.
+                      This material provides a comprehensive foundation for
+                      understanding the subject. Review the key concepts
+                      regularly and don't hesitate to ask questions during
+                      discussions.
                     </p>
                   </div>
                 )}
-                
+
                 {/* Render existing highlights */}
-                {Array.isArray(annotations) && annotations.map((annotation: any) => (
-                  <div
-                    key={annotation.id}
-                    className="highlight-selection inline"
-                    style={{ backgroundColor: annotation.color + '50' }}
-                    title={`Highlighted by ${annotation.user?.fullName || 'Unknown'}`}
-                  >
-                    {annotation.content}
-                  </div>
-                ))}
+                {Array.isArray(annotations) &&
+                  annotations.map((annotation: any) => (
+                    <div
+                      key={annotation.id}
+                      className="highlight-selection inline"
+                      style={{ backgroundColor: annotation.color + "50" }}
+                      title={`Highlighted by ${
+                        annotation.user?.fullName || "Unknown"
+                      }`}
+                    >
+                      {annotation.content}
+                    </div>
+                  ))}
               </article>
             </div>
           </div>
         </div>
-        
+
         {/* Chat Sidebar */}
         {showChat && (
           <ChatPanel

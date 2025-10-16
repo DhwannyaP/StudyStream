@@ -1,20 +1,26 @@
-import express, { type Request, Response, NextFunction } from "express";
+import "dotenv/config";
+import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { YjsWebSocketServer } from "./yjs-websocket";
+import { connectDB } from "./db";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// Serve uploaded files
+app.use("/uploads", express.static("uploads"));
 
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
+  res.json = function (bodyJson: any) {
     capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+    return originalResJson.call(res, bodyJson);
   };
 
   res.on("finish", () => {
@@ -37,7 +43,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Connect to MongoDB
+  await connectDB();
+  
   const server = await registerRoutes(app);
+
+  // Initialize Y.js WebSocket server for collaborative editing
+  const yjsWebSocketServer = new YjsWebSocketServer(server);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -60,12 +72,15 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+    },
+    () => {
+      log(`serving on port ${port}`);
+      log(`Y.js WebSocket server running on /yjs`);
+    }
+  );
 })();

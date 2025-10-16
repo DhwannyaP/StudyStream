@@ -1,159 +1,332 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, timestamp, boolean, integer } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import { Schema, model, Document } from 'mongoose';
+import { z } from 'zod';
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role", { enum: ["teacher", "student", "admin"] }).notNull(),
-  fullName: text("full_name").notNull(),
-  department: text("department"),
-  profileImage: text("profile_image"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// User Schema
+export interface IUser extends Document {
+  _id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: 'teacher' | 'student' | 'admin';
+  fullName: string;
+  department?: string;
+  profileImage?: string;
+  createdAt: Date;
+}
+
+const userSchema = new Schema<IUser>({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['teacher', 'student', 'admin'], required: true },
+  fullName: { type: String, required: true },
+  department: { type: String },
+  profileImage: { type: String },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const notes = pgTable("notes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  teacherId: varchar("teacher_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  description: text("description"),
-  content: jsonb("content"), // For text content
-  fileUrl: text("file_url"), // For uploaded files
-  fileType: text("file_type"), // pdf, ppt, docx, image, etc.
-  fileName: text("file_name"),
-  category: text("category").default("lecture"),
-  isActive: boolean("is_active").default(true),
-  viewCount: integer("view_count").default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+// Note Schema
+export interface INote extends Document {
+  _id: string;
+  teacherId: string;
+  groupId?: string;
+  title: string;
+  description?: string;
+  content?: any; // JSON content
+  fileUrl?: string;
+  fileType?: string;
+  fileName?: string;
+  category?: string;
+  isActive?: boolean;
+  viewCount?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const noteSchema = new Schema<INote>({
+  teacherId: { type: String, required: true, ref: 'User' },
+  groupId: { type: String, ref: 'StudyGroup' },
+  title: { type: String, required: true },
+  description: { type: String },
+  content: { type: Schema.Types.Mixed },
+  fileUrl: { type: String },
+  fileType: { type: String },
+  fileName: { type: String },
+  category: { type: String, default: 'lecture' },
+  isActive: { type: Boolean, default: true },
+  viewCount: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
-export const studyGroups = pgTable("study_groups", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  description: text("description"),
-  creatorId: varchar("creator_id").notNull().references(() => users.id),
-  schedule: text("schedule"), // "Mon, Wed 7PM"
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Study Group Schema
+export interface IStudyGroup extends Document {
+  _id: string;
+  name: string;
+  description?: string;
+  creatorId: string;
+  schedule?: string;
+  isActive?: boolean;
+  createdAt: Date;
+}
+
+const studyGroupSchema = new Schema<IStudyGroup>({
+  name: { type: String, required: true },
+  description: { type: String },
+  creatorId: { type: String, required: true, ref: 'User' },
+  schedule: { type: String },
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const studyGroupMembers = pgTable("study_group_members", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  groupId: varchar("group_id").notNull().references(() => studyGroups.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+// Study Group Member Schema
+export interface IStudyGroupMember extends Document {
+  _id: string;
+  groupId: string;
+  userId: string;
+  joinedAt: Date;
+}
+
+const studyGroupMemberSchema = new Schema<IStudyGroupMember>({
+  groupId: { type: String, required: true, ref: 'StudyGroup' },
+  userId: { type: String, required: true, ref: 'User' },
+  joinedAt: { type: Date, default: Date.now }
 });
 
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  noteId: varchar("note_id").references(() => notes.id),
-  groupId: varchar("group_id").references(() => studyGroups.id),
-  senderId: varchar("sender_id").notNull().references(() => users.id),
-  content: text("content").notNull(),
-  isModerated: boolean("is_moderated").default(false),
-  moderationResult: jsonb("moderation_result"), // AI moderation response
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Message Schema
+export interface IMessage extends Document {
+  _id: string;
+  noteId?: string;
+  groupId?: string;
+  senderId: string;
+  content: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  isModerated?: boolean;
+  moderationResult?: any;
+  createdAt: Date;
+}
+
+const messageSchema = new Schema<IMessage>({
+  noteId: { type: String, ref: 'Note' },
+  groupId: { type: String, ref: 'StudyGroup' },
+  senderId: { type: String, required: true, ref: 'User' },
+  content: { type: String, required: true },
+  fileUrl: { type: String },
+  fileName: { type: String },
+  fileType: { type: String },
+  isModerated: { type: Boolean, default: false },
+  moderationResult: { type: Schema.Types.Mixed },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const annotations = pgTable("annotations", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  noteId: varchar("note_id").notNull().references(() => notes.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  type: text("type", { enum: ["highlight", "note"] }).notNull(),
-  content: text("content"),
-  position: jsonb("position").notNull(), // {start: number, end: number, page?: number}
-  color: text("color").default("#FFEB3B"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Annotation Schema
+export interface IAnnotation extends Document {
+  _id: string;
+  noteId: string;
+  userId: string;
+  type: 'highlight' | 'note';
+  content?: string;
+  position: any; // {start: number, end: number, page?: number}
+  color?: string;
+  createdAt: Date;
+}
+
+const annotationSchema = new Schema<IAnnotation>({
+  noteId: { type: String, required: true, ref: 'Note' },
+  userId: { type: String, required: true, ref: 'User' },
+  type: { type: String, enum: ['highlight', 'note'], required: true },
+  content: { type: String },
+  position: { type: Schema.Types.Mixed, required: true },
+  color: { type: String, default: '#FFEB3B' },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const sessions = pgTable("sessions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  noteId: varchar("note_id").references(() => notes.id),
-  isActive: boolean("is_active").default(true),
-  lastSeen: timestamp("last_seen").defaultNow().notNull(),
-  cursorPosition: jsonb("cursor_position"), // {x: number, y: number, page?: number}
+// Session Schema
+export interface ISession extends Document {
+  _id: string;
+  userId: string;
+  noteId?: string;
+  isActive?: boolean;
+  lastSeen: Date;
+  cursorPosition?: any; // {x: number, y: number, page?: number}
+}
+
+const sessionSchema = new Schema<ISession>({
+  userId: { type: String, required: true, ref: 'User' },
+  noteId: { type: String, ref: 'Note' },
+  isActive: { type: Boolean, default: true },
+  lastSeen: { type: Date, default: Date.now },
+  cursorPosition: { type: Schema.Types.Mixed }
 });
 
-// Admin oversight tables
-export const userApprovals = pgTable("user_approvals", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  adminId: varchar("admin_id").notNull().references(() => users.id),
-  status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending"),
-  reason: text("reason"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+// User Approval Schema
+export interface IUserApproval extends Document {
+  _id: string;
+  userId: string;
+  adminId: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const userApprovalSchema = new Schema<IUserApproval>({
+  userId: { type: String, required: true, ref: 'User' },
+  adminId: { type: String, required: true, ref: 'User' },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  reason: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
-export const contentModerationLog = pgTable("content_moderation_log", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contentType: text("content_type", { enum: ["note", "message", "user"] }).notNull(),
-  contentId: varchar("content_id").notNull(),
-  adminId: varchar("admin_id").notNull().references(() => users.id),
-  action: text("action", { enum: ["approved", "rejected", "flagged", "removed"] }).notNull(),
-  reason: text("reason"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Content Moderation Log Schema
+export interface IContentModerationLog extends Document {
+  _id: string;
+  adminId: string;
+  contentId: string;
+  contentType: string;
+  action: string;
+  reason?: string;
+  createdAt: Date;
+}
+
+const contentModerationLogSchema = new Schema<IContentModerationLog>({
+  adminId: { type: String, required: true, ref: 'User' },
+  contentId: { type: String, required: true },
+  contentType: { type: String, required: true },
+  action: { type: String, required: true },
+  reason: { type: String },
+  createdAt: { type: Date, default: Date.now }
 });
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
+// Notification Schema
+export interface INotification extends Document {
+  _id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type?: string;
+  isRead?: boolean;
+  relatedId?: string;
+  relatedType?: string;
+  createdAt: Date;
+}
+
+const notificationSchema = new Schema<INotification>({
+  userId: { type: String, required: true, ref: 'User' },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  type: { type: String, default: 'info' },
+  isRead: { type: Boolean, default: false },
+  relatedId: { type: String },
+  relatedType: { type: String },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const insertNoteSchema = createInsertSchema(notes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  viewCount: true,
+// Create models
+export const User = model<IUser>('User', userSchema);
+export const Note = model<INote>('Note', noteSchema);
+export const StudyGroup = model<IStudyGroup>('StudyGroup', studyGroupSchema);
+export const StudyGroupMember = model<IStudyGroupMember>('StudyGroupMember', studyGroupMemberSchema);
+export const Message = model<IMessage>('Message', messageSchema);
+export const Annotation = model<IAnnotation>('Annotation', annotationSchema);
+export const Session = model<ISession>('Session', sessionSchema);
+export const UserApproval = model<IUserApproval>('UserApproval', userApprovalSchema);
+export const ContentModerationLog = model<IContentModerationLog>('ContentModerationLog', contentModerationLogSchema);
+export const Notification = model<INotification>('Notification', notificationSchema);
+
+// Zod schemas for validation
+export const insertUserSchema = z.object({
+  username: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(1),
+  role: z.enum(['teacher', 'student', 'admin']),
+  fullName: z.string().min(1),
+  department: z.string().optional(),
+  profileImage: z.string().optional(),
 });
 
-export const insertStudyGroupSchema = createInsertSchema(studyGroups).omit({
-  id: true,
-  createdAt: true,
+export const insertNoteSchema = z.object({
+  teacherId: z.string().min(1),
+  groupId: z.string().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  content: z.any().optional(),
+  fileUrl: z.string().optional(),
+  fileType: z.string().optional(),
+  fileName: z.string().optional(),
+  category: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  createdAt: true,
-  isModerated: true,
-  moderationResult: true,
+export const insertStudyGroupSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  creatorId: z.string().min(1),
+  schedule: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
-export const insertAnnotationSchema = createInsertSchema(annotations).omit({
-  id: true,
-  createdAt: true,
+export const insertMessageSchema = z.object({
+  noteId: z.string().optional(),
+  groupId: z.string().optional(),
+  senderId: z.string().min(1),
+  content: z.string().min(1),
+  fileUrl: z.string().optional(),
+  fileName: z.string().optional(),
+  fileType: z.string().optional(),
 });
 
-export const insertUserApprovalSchema = createInsertSchema(userApprovals).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertAnnotationSchema = z.object({
+  noteId: z.string().min(1),
+  userId: z.string().min(1),
+  type: z.enum(['highlight', 'note']),
+  content: z.string().optional(),
+  position: z.any(),
+  color: z.string().optional(),
 });
 
-export const insertContentModerationLogSchema = createInsertSchema(contentModerationLog).omit({
-  id: true,
-  createdAt: true,
+export const insertUserApprovalSchema = z.object({
+  userId: z.string().min(1),
+  adminId: z.string().min(1),
+  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  reason: z.string().optional(),
 });
 
-// Types
-export type User = typeof users.$inferSelect;
+export const insertContentModerationLogSchema = z.object({
+  adminId: z.string().min(1),
+  contentId: z.string().min(1),
+  contentType: z.string().min(1),
+  action: z.string().min(1),
+  reason: z.string().optional(),
+});
+
+export const insertNotificationSchema = z.object({
+  userId: z.string().min(1),
+  title: z.string().min(1),
+  message: z.string().min(1),
+  type: z.string().optional(),
+  relatedId: z.string().optional(),
+  relatedType: z.string().optional(),
+});
+
+// Type exports for compatibility
+export type User = IUser;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Note = typeof notes.$inferSelect;
+export type Note = INote;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
-export type StudyGroup = typeof studyGroups.$inferSelect;
+export type StudyGroup = IStudyGroup;
 export type InsertStudyGroup = z.infer<typeof insertStudyGroupSchema>;
-export type Message = typeof messages.$inferSelect;
+export type Message = IMessage;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Annotation = typeof annotations.$inferSelect;
+export type Annotation = IAnnotation;
 export type InsertAnnotation = z.infer<typeof insertAnnotationSchema>;
-export type Session = typeof sessions.$inferSelect;
-export type UserApproval = typeof userApprovals.$inferSelect;
+export type Session = ISession;
+export type UserApproval = IUserApproval;
 export type InsertUserApproval = z.infer<typeof insertUserApprovalSchema>;
-export type ContentModerationLog = typeof contentModerationLog.$inferSelect;
+export type ContentModerationLog = IContentModerationLog;
 export type InsertContentModerationLog = z.infer<typeof insertContentModerationLogSchema>;
+export type Notification = INotification;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

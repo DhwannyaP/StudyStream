@@ -23,42 +23,45 @@ interface StudyGroupsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModalProps) {
+export default function StudyGroupsModal({
+  open,
+  onOpenChange,
+}: StudyGroupsModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    schedule: ""
+    schedule: "",
   });
 
   const { data: studyGroups, isLoading } = useQuery({
-    queryKey: ['/api/study-groups'],
+    queryKey: ["/api/study-groups"],
   });
 
   const createGroupMutation = useMutation({
     mutationFn: async (groupData: any) => {
-      const sessionId = localStorage.getItem('sessionId');
-      const response = await fetch('/api/study-groups', {
-        method: 'POST',
+      const sessionId = localStorage.getItem("sessionId");
+      const response = await fetch("/api/study-groups", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionId}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
         },
-        body: JSON.stringify(groupData)
+        body: JSON.stringify(groupData),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message);
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/study-groups'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/study-groups"] });
       toast({
         title: "Study group created!",
         description: "Your study group has been created successfully.",
@@ -72,28 +75,29 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   const joinGroupMutation = useMutation({
     mutationFn: async (groupId: string) => {
-      const sessionId = localStorage.getItem('sessionId');
+      const sessionId = localStorage.getItem("sessionId");
       const response = await fetch(`/api/study-groups/${groupId}/join`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${sessionId}`
-        }
+          Authorization: `Bearer ${sessionId}`,
+        },
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message);
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/study-groups'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/study-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my/study-groups"] });
       toast({
         title: "Joined study group!",
         description: "You've successfully joined the study group.",
@@ -105,20 +109,20 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   const resetForm = () => {
     setFormData({
       name: "",
       description: "",
-      schedule: ""
+      schedule: "",
     });
   };
 
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Group name required",
@@ -146,14 +150,11 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
             Join existing groups or create your own study community
           </p>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Create Group Button/Form */}
           {!showCreateForm ? (
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              className="w-full bg-primary text-white hover:bg-blue-700"
-            >
+            <Button onClick={() => setShowCreateForm(true)} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
               Create New Study Group
             </Button>
@@ -175,40 +176,55 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 <form onSubmit={handleCreateGroup} className="space-y-4">
                   <div>
                     <Label htmlFor="groupName">Group Name *</Label>
                     <Input
                       id="groupName"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., React Study Circle"
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="groupDescription">Description</Label>
                     <Textarea
                       id="groupDescription"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
                       placeholder="What will your group focus on?"
                       rows={3}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="groupSchedule">Schedule</Label>
                     <Input
                       id="groupSchedule"
                       value={formData.schedule}
-                      onChange={(e) => setFormData(prev => ({ ...prev, schedule: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          schedule: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., Mon, Wed 7PM"
                     />
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <Button
                       type="button"
@@ -223,41 +239,50 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-primary text-white hover:bg-blue-700"
+                      className="flex-1"
                       disabled={createGroupMutation.isPending}
                     >
-                      {createGroupMutation.isPending ? "Creating..." : "Create Group"}
+                      {createGroupMutation.isPending
+                        ? "Creating..."
+                        : "Create Group"}
                     </Button>
                   </div>
                 </form>
               </CardContent>
             </Card>
           )}
-          
+
           {/* Study Groups List */}
           <div>
             <h3 className="font-heading text-lg font-bold text-edu-text-primary mb-4">
               Available Study Groups
             </h3>
-            
+
             <ScrollArea className="h-96">
               {isLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-edu-text-secondary mt-2">Loading study groups...</p>
+                  <p className="text-edu-text-secondary mt-2">
+                    Loading study groups...
+                  </p>
                 </div>
-              ) : studyGroups?.length === 0 ? (
+              ) : (studyGroups as any[])?.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-edu-text-secondary">No study groups available</p>
+                  <p className="text-edu-text-secondary">
+                    No study groups available
+                  </p>
                   <p className="text-sm text-edu-text-secondary mt-1">
                     Be the first to create a study group!
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {studyGroups?.map((group: any) => (
-                    <Card key={group.id} className="hover:bg-gray-50 transition-colors">
+                  {(studyGroups as any[])?.map((group: any) => (
+                    <Card
+                      key={group.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -279,23 +304,29 @@ export default function StudyGroupsModal({ open, onOpenChange }: StudyGroupsModa
                                 </span>
                               )}
                               <span className="flex items-center space-x-1">
-                                <Circle className={`h-2 w-2 rounded-full ${
-                                  group.onlineNow > 0 ? 'bg-green-500' : 'bg-gray-400'
-                                }`} />
+                                <Circle
+                                  className={`h-2 w-2 rounded-full ${
+                                    group.onlineNow > 0
+                                      ? "bg-green-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                />
                                 <span>{group.onlineNow || 0} online now</span>
                               </span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             {group.isActive && (
-                              <Badge className="bg-green-100 text-green-800">Active</Badge>
+                              <Badge variant="secondary">Active</Badge>
                             )}
                             <Button
                               onClick={() => handleJoinGroup(group.id)}
-                              className="bg-secondary text-white hover:bg-green-600"
+                              variant="secondary"
                               disabled={joinGroupMutation.isPending}
                             >
-                              {joinGroupMutation.isPending ? "Joining..." : "Join Group"}
+                              {joinGroupMutation.isPending
+                                ? "Joining..."
+                                : "Join Group"}
                             </Button>
                           </div>
                         </div>
