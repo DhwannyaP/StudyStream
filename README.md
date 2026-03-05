@@ -29,8 +29,8 @@
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/yourusername/studystream?style=social)](https://github.com/DhwannyaP/studystream)
-[![Forks](https://img.shields.io/github/forks/yourusername/studystream?style=social)](https://github.com/DhwannyaP/studystream)
+[![Stars](https://img.shields.io/github/stars/yourusername/studystream?style=social)](https://github.com/DhwannyaP/StudyStream)
+[![Forks](https://img.shields.io/github/forks/yourusername/studystream?style=social)](https://github.com/DhwannyaP/StudyStream)
 
 </div>
 
@@ -205,7 +205,7 @@ MongoDB instance (local or Atlas)
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/DhwannyaP/studystream.git
+git clone https://github.com/DhwannyaP/StudyStream.git
 cd studystream
 ```
 
@@ -310,9 +310,9 @@ The research explores how **decentralized communication architectures** can supp
 
 <br/>
 
-[![Star this repo](https://img.shields.io/badge/⭐_Star_This_Repo-FF6B35?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/studystream)
-[![Fork this repo](https://img.shields.io/badge/🍴_Fork_It-61DAFB?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/studystream/fork)
-[![Open an issue](https://img.shields.io/badge/🐛_Report_Bug-FF4757?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/studystream/issues)
+[![Star this repo](https://img.shields.io/badge/⭐_Star_This_Repo-FF6B35?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/StudyStream)
+[![Fork this repo](https://img.shields.io/badge/🍴_Fork_It-61DAFB?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/StudyStream/fork)
+[![Open an issue](https://img.shields.io/badge/🐛_Report_Bug-FF4757?style=for-the-badge&labelColor=1a1a2e)](https://github.com/DhwannyaP/StudyStream/issues)
 
 <br/>
 
